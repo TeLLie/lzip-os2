@@ -1,0 +1,17 @@
+Changes in version 1.21:
+
+Detection of forbidden combinations of characters in trailing data has been
+improved.
+
+Errors are now also checked when closing the input file.
+
+Lzip now compiles on DOS with DJGPP. (Patch from Robert Riebisch).
+
+The descriptions of '-0..-9', '-m' and '-s' in the manual have been
+improved.
+
+The configure script now accepts appending options to CXXFLAGS using the
+syntax 'CXXFLAGS+=OPTIONS'.
+
+It has been documented in INSTALL the use of
+CXXFLAGS+='-D __USE_MINGW_ANSI_STDIO' when compiling on MinGW.
