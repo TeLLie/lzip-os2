@@ -1,18 +1,18 @@
-/*  Lzip - LZMA lossless data compressor
-    Copyright (C) 2008-2019 Antonio Diaz Diaz.
+/* Lzip - LZMA lossless data compressor
+   Copyright (C) 2008-2021 Antonio Diaz Diaz.
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 2 of the License, or
+   (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #define _FILE_OFFSET_BITS 64
@@ -21,6 +21,7 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <new>
 #include <string>
 #include <vector>
 #include <stdint.h>
@@ -90,10 +91,10 @@ Matchfinder_base::Matchfinder_base( const int before_size_,
   if( !buffer ) throw std::bad_alloc();
   if( read_block() && !at_stream_end && buffer_size < buffer_size_limit )
     {
-    buffer_size = buffer_size_limit;
-    uint8_t * const tmp = (uint8_t *)std::realloc( buffer, buffer_size );
+    uint8_t * const tmp = (uint8_t *)std::realloc( buffer, buffer_size_limit );
     if( !tmp ) { std::free( buffer ); throw std::bad_alloc(); }
     buffer = tmp;
+    buffer_size = buffer_size_limit;
     read_block();
     }
   if( at_stream_end && stream_pos < dict_size )
@@ -156,7 +157,7 @@ void Range_encoder::flush_data()
   }
 
 
-     // End Of Stream mark => (dis == 0xFFFFFFFFU, len == min_match_len)
+// End Of Stream marker => (dis == 0xFFFFFFFFU, len == min_match_len)
 void LZ_encoder_base::full_flush( const State state )
   {
   const int pos_state = data_position() & pos_state_mask;

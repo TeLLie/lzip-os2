@@ -1,18 +1,18 @@
-/*  Lzip - LZMA lossless data compressor
-    Copyright (C) 2008-2019 Antonio Diaz Diaz.
+/* Lzip - LZMA lossless data compressor
+   Copyright (C) 2008-2021 Antonio Diaz Diaz.
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 2 of the License, or
+   (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 class State
@@ -78,7 +78,7 @@ inline int get_len_state( const int len )
   { return std::min( len - min_match_len, len_states - 1 ); }
 
 inline int get_lit_state( const uint8_t prev_byte )
-  { return ( prev_byte >> ( 8 - literal_context_bits ) ); }
+  { return prev_byte >> ( 8 - literal_context_bits ); }
 
 
 enum { bit_model_move_bits = 5,
@@ -208,7 +208,7 @@ struct Lzip_header
   {
   uint8_t data[6];			// 0-3 magic bytes
 					//   4 version
-					//   5 coded_dict_size
+					//   5 coded dictionary size
   enum { size = 6 };
 
   void set_magic() { std::memcpy( data, lzip_magic, 4 ); data[4] = 1; }
@@ -254,6 +254,10 @@ struct Lzip_header
       }
     return true;
     }
+
+  bool verify() const
+    { return verify_magic() && verify_version() &&
+             isvalid_ds( dictionary_size() ); }
   };
 
 
@@ -316,6 +320,8 @@ struct Error
   explicit Error( const char * const s ) : msg( s ) {}
   };
 
+inline void set_retval( int & retval, const int new_val )
+  { if( retval < new_val ) retval = new_val; }
 
 const char * const bad_magic_msg = "Bad magic number (file not in lzip format).";
 const char * const bad_dict_msg = "Invalid dictionary size in member header.";
@@ -336,7 +342,7 @@ const char * bad_version( const unsigned version );
 const char * format_ds( const unsigned dictionary_size );
 void show_header( const unsigned dictionary_size );
 int open_instream( const char * const name, struct stat * const in_statsp,
-                   const bool no_ofile, const bool reg_only = false );
+                   const bool one_to_one, const bool reg_only = false );
 void show_error( const char * const msg, const int errcode = 0,
                  const bool help = false );
 void show_file_error( const char * const filename, const char * const msg,

@@ -1,17 +1,39 @@
-Changes in version 1.21:
+Changes in version 1.22:
 
-Detection of forbidden combinations of characters in trailing data has been
-improved.
+Lzip now reports an error if a file name is empty (lzip -t "").
 
-Errors are now also checked when closing the input file.
+Option '-o, --output' now behaves like '-c, --stdout', but sending the
+output unconditionally to a file instead of to standard output. See the new
+description of '-o' in the manual. This change is backwards compatible only
+when (de)compressing from standard input alone. Therefore commands like:
+  lzip -o foo.lz - bar < foo
+must now be split into:
+  lzip -o foo.lz - < foo
+  lzip bar
+or rewritten as:
+  lzip - bar < foo > foo.lz
 
-Lzip now compiles on DOS with DJGPP. (Patch from Robert Riebisch).
+When using '-c' or '-o', lzip now checks whether the output is a terminal
+only once.
 
-The descriptions of '-0..-9', '-m' and '-s' in the manual have been
-improved.
+Lzip now does not even open the output file if the input file is a terminal.
 
-The configure script now accepts appending options to CXXFLAGS using the
-syntax 'CXXFLAGS+=OPTIONS'.
+Lzip can now be built, tested, and installed on systems lacking a 'make'
+program. (Feature suggested by Mohammad Akhlaghi).
 
-It has been documented in INSTALL the use of
-CXXFLAGS+='-D __USE_MINGW_ANSI_STDIO' when compiling on MinGW.
+The words 'decompressed' and 'compressed' have been replaced with the
+shorter 'out' and 'in' in the verbose output when decompressing or testing.
+
+Option '--list' now reports corruption or truncation of the last header in a
+multimenber file specifically instead of showing the generic message "Last
+member in input file is truncated or corrupt."
+
+The commands needed to extract files from a tar.lz archive have been
+documented in the manual, in the output of '--help', and in the man page.
+
+Plzip and tarlz are mentioned in the manual as alternatives for
+multiprocessors.
+
+Several fixes and improvements have been made to the manual.
+
+9 new test files have been added to the testsuite.

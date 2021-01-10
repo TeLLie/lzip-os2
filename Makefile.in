@@ -74,7 +74,7 @@ install-info :
 	-rm -f "$(DESTDIR)$(infodir)/$(pkgname).info"*
 	$(INSTALL_DATA) $(VPATH)/doc/$(pkgname).info "$(DESTDIR)$(infodir)/$(pkgname).info"
 	-if $(CAN_RUN_INSTALLINFO) ; then \
-		install-info --info-dir="$(DESTDIR)$(infodir)" "$(DESTDIR)$(infodir)/$(pkgname).info" ; \
+	  install-info --info-dir="$(DESTDIR)$(infodir)" "$(DESTDIR)$(infodir)/$(pkgname).info" ; \
 	fi
 
 install-info-compress : install-info
@@ -95,7 +95,7 @@ uninstall-bin :
 
 uninstall-info :
 	-if $(CAN_RUN_INSTALLINFO) ; then \
-		install-info --info-dir="$(DESTDIR)$(infodir)" --remove "$(DESTDIR)$(infodir)/$(pkgname).info" ; \
+	  install-info --info-dir="$(DESTDIR)$(infodir)" --remove "$(DESTDIR)$(infodir)/$(pkgname).info" ; \
 	fi
 	-rm -f "$(DESTDIR)$(infodir)/$(pkgname).info"*
 
@@ -120,7 +120,10 @@ dist : doc
 	  $(DISTNAME)/*.cc \
 	  $(DISTNAME)/testsuite/check.sh \
 	  $(DISTNAME)/testsuite/test.txt \
-	  $(DISTNAME)/testsuite/test.txt.lz
+	  $(DISTNAME)/testsuite/fox.lz \
+	  $(DISTNAME)/testsuite/fox_*.lz \
+	  $(DISTNAME)/testsuite/test.txt.lz \
+	  $(DISTNAME)/testsuite/test_em.txt.lz
 	rm -f $(DISTNAME)
 	lzip -v -9 $(DISTNAME).tar
 

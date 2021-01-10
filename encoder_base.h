@@ -1,18 +1,18 @@
-/*  Lzip - LZMA lossless data compressor
-    Copyright (C) 2008-2019 Antonio Diaz Diaz.
+/* Lzip - LZMA lossless data compressor
+   Copyright (C) 2008-2021 Antonio Diaz Diaz.
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 2 of the License, or
+   (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 enum { price_shift_bits = 6,
@@ -137,7 +137,7 @@ inline int price_symbol_reversed( const Bit_model bm[], int symbol,
     const bool bit = symbol & 1;
     symbol >>= 1;
     price += price_bit( bm[model], bit );
-    model = ( model << 1 ) | bit;
+    model <<= 1; model |= bit;
     }
   return price;
   }
@@ -315,27 +315,27 @@ public:
 
   void encode_tree3( Bit_model bm[], const int symbol )
     {
-    int model = 1;
     bool bit = ( symbol >> 2 ) & 1;
-    encode_bit( bm[model], bit ); model = ( model << 1 ) | bit;
+    encode_bit( bm[1], bit );
+    int model = 2 | bit;
     bit = ( symbol >> 1 ) & 1;
-    encode_bit( bm[model], bit ); model = ( model << 1 ) | bit;
+    encode_bit( bm[model], bit ); model <<= 1; model |= bit;
     encode_bit( bm[model], symbol & 1 );
     }
 
   void encode_tree6( Bit_model bm[], const unsigned symbol )
     {
-    int model = 1;
     bool bit = ( symbol >> 5 ) & 1;
-    encode_bit( bm[model], bit ); model = ( model << 1 ) | bit;
+    encode_bit( bm[1], bit );
+    int model = 2 | bit;
     bit = ( symbol >> 4 ) & 1;
-    encode_bit( bm[model], bit ); model = ( model << 1 ) | bit;
+    encode_bit( bm[model], bit ); model <<= 1; model |= bit;
     bit = ( symbol >> 3 ) & 1;
-    encode_bit( bm[model], bit ); model = ( model << 1 ) | bit;
+    encode_bit( bm[model], bit ); model <<= 1; model |= bit;
     bit = ( symbol >> 2 ) & 1;
-    encode_bit( bm[model], bit ); model = ( model << 1 ) | bit;
+    encode_bit( bm[model], bit ); model <<= 1; model |= bit;
     bit = ( symbol >> 1 ) & 1;
-    encode_bit( bm[model], bit ); model = ( model << 1 ) | bit;
+    encode_bit( bm[model], bit ); model <<= 1; model |= bit;
     encode_bit( bm[model], symbol & 1 );
     }
 
@@ -346,7 +346,7 @@ public:
       {
       const bool bit = ( symbol >> i ) & 1;
       encode_bit( bm[model], bit );
-      model = ( model << 1 ) | bit;
+      model <<= 1; model |= bit;
       }
     }
 
@@ -358,7 +358,7 @@ public:
       const bool bit = symbol & 1;
       symbol >>= 1;
       encode_bit( bm[model], bit );
-      model = ( model << 1 ) | bit;
+      model <<= 1; model |= bit;
       }
     }
 
@@ -460,8 +460,8 @@ protected:
       const unsigned direct_dis = dis - base;
 
       if( dis_slot < end_dis_model )
-        renc.encode_tree_reversed( bm_dis + ( base - dis_slot ), direct_dis,
-                                   direct_bits );
+        renc.encode_tree_reversed( bm_dis + ( base - dis_slot ),
+                                   direct_dis, direct_bits );
       else
         {
         renc.encode( direct_dis >> dis_align_bits, direct_bits - dis_align_bits );

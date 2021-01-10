@@ -1,18 +1,18 @@
-/*  Lzip - LZMA lossless data compressor
-    Copyright (C) 2008-2019 Antonio Diaz Diaz.
+/* Lzip - LZMA lossless data compressor
+   Copyright (C) 2008-2021 Antonio Diaz Diaz.
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 2 of the License, or
+   (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifndef INT64_MAX
@@ -52,10 +52,13 @@ class Lzip_index
   std::string error_;
   const long long insize;
   int retval_;
+  unsigned dictionary_size_;	// largest dictionary size in the file
 
+  bool check_header_error( const Lzip_header & header );
   void set_errno_error( const char * const msg );
   void set_num_error( const char * const msg, unsigned long long num );
-  bool skip_trailing_data( const int fd, long long & pos,
+  bool read_header( const int fd, Lzip_header & header, const long long pos );
+  bool skip_trailing_data( const int fd, unsigned long long & pos,
          const bool ignore_trailing, const bool loose_trailing );
 
 public:
@@ -65,6 +68,7 @@ public:
   long members() const { return member_vector.size(); }
   const std::string & error() const { return error_; }
   int retval() const { return retval_; }
+  unsigned dictionary_size() const { return dictionary_size_; }
 
   long long udata_size() const
     { if( member_vector.empty() ) return 0;

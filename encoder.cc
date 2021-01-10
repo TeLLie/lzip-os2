@@ -1,18 +1,18 @@
-/*  Lzip - LZMA lossless data compressor
-    Copyright (C) 2008-2019 Antonio Diaz Diaz.
+/* Lzip - LZMA lossless data compressor
+   Copyright (C) 2008-2021 Antonio Diaz Diaz.
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 2 of the License, or
+   (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #define _FILE_OFFSET_BITS 64
@@ -42,9 +42,8 @@ int LZ_encoder::get_match_pairs( Pair * pairs )
     if( len_limit < 4 ) return 0;
     }
 
-  int maxlen = 0;
+  int maxlen = 3;			// only used if pairs != 0
   int num_pairs = 0;
-  const int pos1 = pos + 1;
   const int min_pos = ( pos > dictionary_size ) ? pos - dictionary_size : 0;
   const uint8_t * const data = ptr_to_current_pos();
 
@@ -57,32 +56,31 @@ int LZ_encoder::get_match_pairs( Pair * pairs )
 
   if( pairs )
     {
-    int np2 = prev_positions[key2];
-    int np3 = prev_positions[key3];
+    const int np2 = prev_positions[key2];
+    const int np3 = prev_positions[key3];
     if( np2 > min_pos && buffer[np2-1] == data[0] )
       {
       pairs[0].dis = pos - np2;
-      pairs[0].len = maxlen = 2;
+      pairs[0].len = maxlen = 2 + ( np2 == np3 );
       num_pairs = 1;
       }
     if( np2 != np3 && np3 > min_pos && buffer[np3-1] == data[0] )
       {
       maxlen = 3;
-      np2 = np3;
-      pairs[num_pairs].dis = pos - np2;
-      ++num_pairs;
+      pairs[num_pairs++].dis = pos - np3;
       }
     if( num_pairs > 0 )
       {
-      const int delta = pos1 - np2;
+      const int delta = pairs[num_pairs-1].dis + 1;
       while( maxlen < len_limit && data[maxlen-delta] == data[maxlen] )
         ++maxlen;
       pairs[num_pairs-1].len = maxlen;
+      if( maxlen < 3 ) maxlen = 3;
       if( maxlen >= len_limit ) pairs = 0;	// done. now just skip
       }
-    if( maxlen < 3 ) maxlen = 3;
     }
 
+  const int pos1 = pos + 1;
   prev_positions[key2] = pos1;
   prev_positions[key3] = pos1;
   int newpos1 = prev_positions[key4];
