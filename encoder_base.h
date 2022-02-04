@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2021 Antonio Diaz Diaz.
+   Copyright (C) 2008-2022 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -302,7 +302,8 @@ public:
     if( !bit )
       {
       range = bound;
-      bm.probability += (bit_model_total - bm.probability) >> bit_model_move_bits;
+      bm.probability +=
+        ( bit_model_total - bm.probability ) >> bit_model_move_bits;
       }
     else
       {

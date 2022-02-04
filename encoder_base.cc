@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2021 Antonio Diaz Diaz.
+   Copyright (C) 2008-2022 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -104,8 +104,7 @@ Matchfinder_base::Matchfinder_base( const int before_size_,
   pos_limit = buffer_size;
   if( !at_stream_end ) pos_limit -= after_size;
   unsigned size = 1 << std::max( 16, real_bits( dictionary_size - 1 ) - 2 );
-  if( dictionary_size > 1 << 26 )		// 64 MiB
-    size >>= 1;
+  if( dictionary_size > 1 << 26 ) size >>= 1;		// 64 MiB
   key4_mask = size - 1;			// increases with dictionary size
   size += num_prev_positions23;
   num_prev_positions = size;
@@ -133,8 +132,7 @@ void Matchfinder_base::reset()
     {
     dictionary_size = std::max( (int)min_dictionary_size, stream_pos );
     int size = 1 << std::max( 16, real_bits( dictionary_size - 1 ) - 2 );
-    if( dictionary_size > 1 << 26 )		// 64 MiB
-      size >>= 1;
+    if( dictionary_size > 1 << 26 ) size >>= 1;		// 64 MiB
     key4_mask = size - 1;
     size += num_prev_positions23;
     num_prev_positions = size;

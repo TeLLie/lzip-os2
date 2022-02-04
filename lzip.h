@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2021 Antonio Diaz Diaz.
+   Copyright (C) 2008-2022 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,11 +30,7 @@ public:
     static const int next[states] = { 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 4, 5 };
     st = next[st];
     }
-  bool is_char_set_char()
-    {
-    if( st < 7 ) { st -= ( st < 4 ) ? st : 3; return true; }
-    else { st -= ( st < 10 ) ? 3 : 6; return false; }
-    }
+  bool is_char_set_char() { set_char(); return st < 4; }
   void set_char_rep()  { st = 8; }
   void set_match()     { st = ( st < 7 ) ? 7 : 10; }
   void set_rep()       { st = ( st < 7 ) ? 8 : 11; }
@@ -176,6 +172,7 @@ public:
   void update_byte( uint32_t & crc, const uint8_t byte ) const
     { crc = data[(crc^byte)&0xFF] ^ ( crc >> 8 ); }
 
+  // about as fast as it is possible without messing with endianness
   void update_buf( uint32_t & crc, const uint8_t * const buffer,
                    const int size ) const
     {
@@ -221,6 +218,7 @@ struct Lzip_header
       if( data[i] != lzip_magic[i] ) return false;
     return ( sz > 0 );
     }
+
   bool verify_corrupt() const			// detect corrupt header
     {
     int matches = 0;

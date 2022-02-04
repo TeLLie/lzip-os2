@@ -1,6 +1,6 @@
 This is lzip.info, produced by makeinfo version 4.13+ from lzip.texi.
 
-INFO-DIR-SECTION Data Compression
+INFO-DIR-SECTION Compression
 START-INFO-DIR-ENTRY
 * Lzip: (lzip).                 LZMA lossless data compressor
 END-INFO-DIR-ENTRY
@@ -11,7 +11,7 @@ File: lzip.info,  Node: Top,  Next: Introduction,  Up: (dir)
 Lzip Manual
 ***********
 
-This manual is for Lzip (version 1.22, 4 January 2021).
+This manual is for Lzip (version 1.23, 24 January 2022).
 
 * Menu:
 
@@ -19,8 +19,8 @@ This manual is for Lzip (version 1.22, 4 January 2021).
 * Output::                 Meaning of lzip's output
 * Invoking lzip::          Command line interface
 * Quality assurance::      Design, development, and testing of lzip
-* File format::            Detailed format of the compressed file
 * Algorithm::              How lzip compresses the data
+* File format::            Detailed format of the compressed file
 * Stream format::          Format of the LZMA stream in lzip files
 * Trailing data::          Extra data appended to the file
 * Examples::               A small tutorial with examples
@@ -29,7 +29,7 @@ This manual is for Lzip (version 1.22, 4 January 2021).
 * Concept index::          Index of concepts
 
 
-   Copyright (C) 2008-2021 Antonio Diaz Diaz.
+   Copyright (C) 2008-2022 Antonio Diaz Diaz.
 
    This manual is free documentation: you have unlimited permission to copy,
 distribute, and modify it.
@@ -42,13 +42,14 @@ File: lzip.info,  Node: Introduction,  Next: Output,  Prev: Top,  Up: Top
 
 Lzip is a lossless data compressor with a user interface similar to the one
 of gzip or bzip2. Lzip uses a simplified form of the 'Lempel-Ziv-Markov
-chain-Algorithm' (LZMA) stream format, chosen to maximize safety and
-interoperability. Lzip can compress about as fast as gzip (lzip -0) or
-compress most files more than bzip2 (lzip -9). Decompression speed is
-intermediate between gzip and bzip2. Lzip is better than gzip and bzip2 from
-a data recovery perspective. Lzip has been designed, written, and tested
-with great care to replace gzip and bzip2 as the standard general-purpose
-compressed format for unix-like systems.
+chain-Algorithm' (LZMA) stream format and provides a 3 factor integrity
+checking to maximize interoperability and optimize safety. Lzip can compress
+about as fast as gzip (lzip -0) or compress most files more than bzip2
+(lzip -9). Decompression speed is intermediate between gzip and bzip2. Lzip
+is better than gzip and bzip2 from a data recovery perspective. Lzip has
+been designed, written, and tested with great care to replace gzip and
+bzip2 as the standard general-purpose compressed format for unix-like
+systems.
 
    For compressing/decompressing large files on multiprocessor machines
 plzip can be much faster than lzip at the cost of a slightly reduced
@@ -86,9 +87,9 @@ byte near the beginning is a thing of the past.
 
    The member trailer stores the 32-bit CRC of the original data, the size
 of the original data, and the size of the member. These values, together
-with the end-of-stream marker, provide a 3 factor integrity checking which
-guarantees that the decompressed version of the data is identical to the
-original. This guards against corruption of the compressed data, and
+with the "End Of Stream" marker, provide a 3 factor integrity checking
+which guarantees that the decompressed version of the data is identical to
+the original. This guards against corruption of the compressed data, and
 against undetected bugs in lzip (hopefully very unlikely). The chances of
 data corruption going undetected are microscopic. Be aware, though, that
 the check occurs upon decompression, so it can only tell you that something
@@ -119,7 +120,7 @@ filename.lz    becomes   filename
 filename.tlz   becomes   filename.tar
 anyothername   becomes   anyothername.out
 
-   (De)compressing a file is much like copying or moving it; therefore lzip
+   (De)compressing a file is much like copying or moving it. Therefore lzip
 preserves the access and modification dates, permissions, and, when
 possible, ownership of the file just as 'cp -p' does. (If the user ID or
 the group ID can't be duplicated, the file permission bits S_ISUID and
@@ -247,10 +248,13 @@ once, the first time it appears in the command line.
 
 '-d'
 '--decompress'
-     Decompress the files specified. If a file does not exist or can't be
-     opened, lzip continues decompressing the rest of the files. If a file
-     fails to decompress, or is a terminal, lzip exits immediately without
-     decompressing the rest of the files.
+     Decompress the files specified. If a file does not exist, can't be
+     opened, or the destination file already exists and '--force' has not
+     been specified, lzip continues decompressing the rest of the files and
+     exits with error status 1. If a file fails to decompress, or is a
+     terminal, lzip exits immediately with error status 2 without
+     decompressing the rest of the files. A terminal is considered an
+     uncompressed file, and therefore invalid.
 
 '-f'
 '--force'
@@ -276,10 +280,12 @@ once, the first time it appears in the command line.
      positions and sizes of each member in multimember files are also
      printed.
 
-     '-lq' can be used to verify quickly (without decompressing) the
-     structural integrity of the files specified. (Use '--test' to verify
-     the data integrity). '-alq' additionally verifies that none of the
-     files specified contain trailing data.
+     If any file is damaged, does not exist, can't be opened, or is not
+     regular, the final exit status will be > 0. '-lq' can be used to verify
+     quickly (without decompressing) the structural integrity of the files
+     specified. (Use '--test' to verify the data integrity). '-alq'
+     additionally verifies that none of the files specified contain
+     trailing data.
 
 '-m BYTES'
 '--match-length=BYTES'
@@ -418,11 +424,11 @@ Y        yottabyte (10^24)         |   Yi       yobibyte (2^80)
 
    Exit status: 0 for a normal exit, 1 for environmental problems (file not
 found, invalid flags, I/O errors, etc), 2 to indicate a corrupt or invalid
-input file, 3 for an internal consistency error (eg, bug) which caused lzip
-to panic.
+input file, 3 for an internal consistency error (e.g., bug) which caused
+lzip to panic.
 
 
-File: lzip.info,  Node: Quality assurance,  Next: File format,  Prev: Invoking lzip,  Up: Top
+File: lzip.info,  Node: Quality assurance,  Next: Algorithm,  Prev: Invoking lzip,  Up: Top
 
 4 Design, development, and testing of lzip
 ******************************************
@@ -570,12 +576,13 @@ extraction of the decompressed data.
 =============================
 
 'Accurate and robust error detection'
-     The lzip format provides 3 factor integrity checking and the
-     decompressors report mismatches in each factor separately. This way if
-     just one byte in one factor fails but the other two factors match the
-     data, it probably means that the data are intact and the corruption
-     just affects the mismatching factor (CRC or data size) in the check
-     sequence.
+     The lzip format provides 3 factor integrity checking, and the
+     decompressors report mismatches in each factor separately. This method
+     detects most false positives for corruption. If just one byte in one
+     factor fails but the other two factors match the data, it probably
+     means that the data are intact and the corruption just affects the
+     mismatching factor (CRC, data size, or member size) in the member
+     trailer.
 
 'Multiple implementations'
      Just like the lzip format provides 3 factor protection against
@@ -609,82 +616,9 @@ extraction of the decompressed data.
 
 
 
-File: lzip.info,  Node: File format,  Next: Algorithm,  Prev: Quality assurance,  Up: Top
+File: lzip.info,  Node: Algorithm,  Next: File format,  Prev: Quality assurance,  Up: Top
 
-5 File format
-*************
-
-Perfection is reached, not when there is no longer anything to add, but
-when there is no longer anything to take away.
--- Antoine de Saint-Exupery
-
-
-   In the diagram below, a box like this:
-
-+---+
-|   | <-- the vertical bars might be missing
-+---+
-
-   represents one byte; a box like this:
-
-+==============+
-|              |
-+==============+
-
-   represents a variable number of bytes.
-
-
-   A lzip file consists of a series of "members" (compressed data sets).
-The members simply appear one after another in the file, with no additional
-information before, between, or after them.
-
-   Each member has the following structure:
-
-+--+--+--+--+----+----+=============+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| ID string | VN | DS | LZMA stream | CRC32 |   Data size   |  Member size  |
-+--+--+--+--+----+----+=============+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
-   All multibyte values are stored in little endian order.
-
-'ID string (the "magic" bytes)'
-     A four byte string, identifying the lzip format, with the value "LZIP"
-     (0x4C, 0x5A, 0x49, 0x50).
-
-'VN (version number, 1 byte)'
-     Just in case something needs to be modified in the future. 1 for now.
-
-'DS (coded dictionary size, 1 byte)'
-     The dictionary size is calculated by taking a power of 2 (the base
-     size) and subtracting from it a fraction between 0/16 and 7/16 of the
-     base size.
-     Bits 4-0 contain the base 2 logarithm of the base size (12 to 29).
-     Bits 7-5 contain the numerator of the fraction (0 to 7) to subtract
-     from the base size to obtain the dictionary size.
-     Example: 0xD3 = 2^19 - 6 * 2^15 = 512 KiB - 6 * 32 KiB = 320 KiB
-     Valid values for dictionary size range from 4 KiB to 512 MiB.
-
-'LZMA stream'
-     The LZMA stream, finished by an end of stream marker. Uses default
-     values for encoder properties. *Note Stream format::, for a complete
-     description.
-
-'CRC32 (4 bytes)'
-     Cyclic Redundancy Check (CRC) of the uncompressed original data.
-
-'Data size (8 bytes)'
-     Size of the uncompressed original data.
-
-'Member size (8 bytes)'
-     Total size of the member, including header and trailer. This field acts
-     as a distributed index, allows the verification of stream integrity,
-     and facilitates safe recovery of undamaged members from multimember
-     files.
-
-
-
-File: lzip.info,  Node: Algorithm,  Next: Stream format,  Prev: File format,  Up: Top
-
-6 Algorithm
+5 Algorithm
 ***********
 
 In spite of its name (Lempel-Ziv-Markov chain-Algorithm), LZMA is not a
@@ -699,7 +633,7 @@ finding coding sequences of minimum size than the one currently used by
 lzip could be developed, and the resulting sequence could also be coded
 using the LZMA coding scheme.
 
-   Lzip currently implements two variants of the LZMA algorithm; fast (used
+   Lzip currently implements two variants of the LZMA algorithm: fast (used
 by option '-0') and normal (used by all other compression levels).
 
    The high compression of LZMA comes from combining two basic, well-proven
@@ -711,7 +645,7 @@ contexts according to what the bits are used for.
    Lzip is a two stage compressor. The first stage is a Lempel-Ziv coder,
 which reduces redundancy by translating chunks of data to their
 corresponding distance-length pairs. The second stage is a range encoder
-that uses a different probability model for each type of data; distances,
+that uses a different probability model for each type of data: distances,
 lengths, literal bytes, etc.
 
    Here is how it works, step by step:
@@ -757,17 +691,90 @@ encoding), Igor Pavlov (for putting all the above together in LZMA), and
 Julian Seward (for bzip2's CLI).
 
 
-File: lzip.info,  Node: Stream format,  Next: Trailing data,  Prev: Algorithm,  Up: Top
+File: lzip.info,  Node: File format,  Next: Stream format,  Prev: Algorithm,  Up: Top
+
+6 File format
+*************
+
+Perfection is reached, not when there is no longer anything to add, but
+when there is no longer anything to take away.
+-- Antoine de Saint-Exupery
+
+
+   In the diagram below, a box like this:
+
++---+
+|   | <-- the vertical bars might be missing
++---+
+
+   represents one byte; a box like this:
+
++==============+
+|              |
++==============+
+
+   represents a variable number of bytes.
+
+
+   A lzip file consists of a series of independent "members" (compressed
+data sets). The members simply appear one after another in the file, with no
+additional information before, between, or after them. Each member can
+encode in compressed form up to 16 EiB - 1 byte of uncompressed data. The
+size of a multimember file is unlimited.
+
+   Each member has the following structure:
+
++--+--+--+--+----+----+=============+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| ID string | VN | DS | LZMA stream | CRC32 |   Data size   |  Member size  |
++--+--+--+--+----+----+=============+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   All multibyte values are stored in little endian order.
+
+'ID string (the "magic" bytes)'
+     A four byte string, identifying the lzip format, with the value "LZIP"
+     (0x4C, 0x5A, 0x49, 0x50).
+
+'VN (version number, 1 byte)'
+     Just in case something needs to be modified in the future. 1 for now.
+
+'DS (coded dictionary size, 1 byte)'
+     The dictionary size is calculated by taking a power of 2 (the base
+     size) and subtracting from it a fraction between 0/16 and 7/16 of the
+     base size.
+     Bits 4-0 contain the base 2 logarithm of the base size (12 to 29).
+     Bits 7-5 contain the numerator of the fraction (0 to 7) to subtract
+     from the base size to obtain the dictionary size.
+     Example: 0xD3 = 2^19 - 6 * 2^15 = 512 KiB - 6 * 32 KiB = 320 KiB
+     Valid values for dictionary size range from 4 KiB to 512 MiB.
+
+'LZMA stream'
+     The LZMA stream, finished by an "End Of Stream" marker. Uses default
+     values for encoder properties. *Note Stream format::, for a complete
+     description.
+
+'CRC32 (4 bytes)'
+     Cyclic Redundancy Check (CRC) of the original uncompressed data.
+
+'Data size (8 bytes)'
+     Size of the original uncompressed data.
+
+'Member size (8 bytes)'
+     Total size of the member, including header and trailer. This field acts
+     as a distributed index, allows the verification of stream integrity,
+     and facilitates the safe recovery of undamaged members from
+     multimember files. Member size should be limited to 2 PiB to prevent
+     the data size field from overflowing.
+
+
+
+File: lzip.info,  Node: Stream format,  Next: Trailing data,  Prev: File format,  Up: Top
 
 7 Format of the LZMA stream in lzip files
 *****************************************
 
-Lzip uses a simplified form of the LZMA stream format chosen to maximize
-safety and interoperability.
-
-   The LZMA algorithm has three parameters, called "special LZMA
-properties", to adjust it for some kinds of binary data. These parameters
-are; 'literal_context_bits' (with a default value of 3),
+The LZMA algorithm has three parameters, called "special LZMA properties",
+to adjust it for some kinds of binary data. These parameters are:
+'literal_context_bits' (with a default value of 3),
 'literal_pos_state_bits' (with a default value of 0), and 'pos_state_bits'
 (with a default value of 2). As a general purpose compressor, lzip only
 uses the default values for these parameters. In particular
@@ -777,12 +784,14 @@ in the code.
    Lzip finishes the LZMA stream with an "End Of Stream" (EOS) marker (the
 distance-length pair 0xFFFFFFFFU, 2), which in conjunction with the 'member
 size' field in the member trailer allows the verification of stream
-integrity. The LZMA stream in lzip files always has these two features
-(default properties and EOS marker) and is referred to in this document as
-LZMA-302eos. The EOS marker is the only marker allowed in lzip files.
+integrity. The EOS marker is the only marker allowed in lzip files. The
+LZMA stream in lzip files always has these two features (default properties
+and EOS marker) and is referred to in this document as LZMA-302eos. This
+simplified form of the LZMA stream format has been chosen to maximize
+interoperability and safety.
 
    The second stage of LZMA is a range encoder that uses a different
-probability model for each type of symbol; distances, lengths, literal
+probability model for each type of symbol: distances, lengths, literal
 bytes, etc. Range encoding conceptually encodes all the symbols of the
 message into one number. Unlike Huffman coding, which assigns to each
 symbol a bit-pattern and concatenates all the bit-patterns together, range
@@ -790,16 +799,16 @@ encoding can compress one symbol to less than one bit. Therefore the
 compressed data produced by a range encoder can't be split in pieces that
 could be described individually.
 
-   It seems that the only way of describing the LZMA-302eos stream is
-describing the algorithm that decodes it. And given the many details about
+   It seems that the only way of describing the LZMA-302eos stream is to
+describe the algorithm that decodes it. And given the many details about
 the range decoder that need to be described accurately, the source code of
-a real decoder seems the only appropriate reference to use.
+a real decompressor seems the only appropriate reference to use.
 
    What follows is a description of the decoding algorithm for LZMA-302eos
 streams using as reference the source code of "lzd", an educational
 decompressor for lzip files which can be downloaded from the lzip download
-directory. The source code of lzd is included in appendix A. *Note
-Reference source code::.
+directory. Lzd is written in C++11 and its source code is included in
+appendix A. *Note Reference source code::.
 
 
 7.1 What is coded
@@ -835,7 +844,7 @@ Bit sequence                           Description
 1 + 1 + 8 bits                         lengths from 18 to 273
 
 
-   The coding of distances is a little more complicated, so I'll begin
+   The coding of distances is a little more complicated, so I'll begin by
 explaining a simpler version of the encoding.
 
    Imagine you need to encode a number from 0 to 2^32 - 1, and you want to
@@ -845,7 +854,7 @@ which you may find by making a bit scan from the left (from the MSB). A
 position of 0 means that the number is 0 (no bit is set), 1 means the LSB is
 the first bit set (the number is 1), and 32 means the MSB is set (i.e., the
 number is >= 0x80000000). Then, if the position is >= 2, you encode the
-remaining position - 1 bits. Let's call these bits "direct_bits" because
+remaining position - 1 bits. Let's call these bits "direct bits" because
 they are coded directly by value instead of indirectly by position.
 
    The inconvenient of this simple method is that it needs 6 bits to encode
@@ -901,9 +910,10 @@ integers representing the probability of the corresponding bit being 0.
      of 3. The resulting value is in the range 0 to 3.
 
 
-   In the following table, '!literal' is any sequence except a literal
-byte. 'rep' is any one of 'rep0', 'rep1', 'rep2', or 'rep3'. The types of
-previous sequences corresponding to each state are:
+   The types of previous sequences corresponding to each state are shown in
+the following table. '!literal' is any sequence except a literal byte.
+'rep' is any one of 'rep0', 'rep1', 'rep2', or 'rep3'. The last type in
+each line is the most recent.
 
 State   Types of previous sequences
 ------------------------------------------------------
@@ -974,9 +984,9 @@ The LZMA stream is consumed one byte at a time by the range decoder. (See
 of decoded bits, depending on how well these bits agree with their context.
 (See 'decode_bit' in the source).
 
-   The range decoder state consists of two unsigned 32-bit variables;
+   The range decoder state consists of two unsigned 32-bit variables:
 'range' (representing the most significant part of the range size not yet
-decoded), and 'code' (representing the current point within 'range').
+decoded) and 'code' (representing the current point within 'range').
 'range' is initialized to 2^32 - 1, and 'code' is initialized to 0.
 
    The range encoder produces a first 0 byte that must be ignored by the
@@ -988,7 +998,7 @@ range decoder. This is done by shifting 5 bytes in the initialization of
 ==========================================
 
 After decoding the member header and obtaining the dictionary size, the
-range decoder is initialized and then the LZMA decoder enters a loop (See
+range decoder is initialized and then the LZMA decoder enters a loop (see
 'decode_member' in the source) where it invokes the range decoder with the
 appropriate contexts to decode the different coding sequences (matches,
 repeated matches, and literal bytes), until the "End Of Stream" marker is
@@ -996,8 +1006,8 @@ decoded.
 
    Once the "End Of Stream" marker has been decoded, the decompressor reads
 and decodes the member trailer, and verifies that the three integrity
-factors (CRC, data size, and member size) match those calculated by the
-LZMA decoder.
+factors stored there (CRC, data size, and member size) match those computed
+from the data.
 
 
 File: lzip.info,  Node: Trailing data,  Next: Examples,  Prev: Stream format,  Up: Top
@@ -1074,7 +1084,7 @@ show the compression ratio.
      lzip -v file
 
 
-Example 3: Like example 1 but the created 'file.lz' is multimember with a
+Example 3: Like example 2 but the created 'file.lz' is multimember with a
 member size of 1 MiB. The compression ratio is not shown.
 
      lzip -b 1MiB file
@@ -1092,15 +1102,7 @@ status.
      lzip -tv file.lz
 
 
-Example 6: Compress a whole device in /dev/sdc and send the output to
-'file.lz'.
-
-       lzip -c /dev/sdc > file.lz
-     or
-       lzip /dev/sdc -o file.lz
-
-
-Example 7: The right way of concatenating the decompressed output of two or
+Example 6: The right way of concatenating the decompressed output of two or
 more compressed files. *Note Trailing data::.
 
      Don't do this
@@ -1109,16 +1111,24 @@ more compressed files. *Note Trailing data::.
        lzip -cd file1.lz file2.lz file3.lz
 
 
-Example 8: Decompress 'file.lz' partially until 10 KiB of decompressed data
+Example 7: Decompress 'file.lz' partially until 10 KiB of decompressed data
 are produced.
 
      lzip -cd file.lz | dd bs=1024 count=10
 
 
-Example 9: Decompress 'file.lz' partially from decompressed byte at offset
+Example 8: Decompress 'file.lz' partially from decompressed byte at offset
 10000 to decompressed byte at offset 14999 (5000 bytes are produced).
 
      lzip -cd file.lz | dd bs=1000 skip=10 count=5
+
+
+Example 9: Compress a whole device in /dev/sdc and send the output to
+'file.lz'.
+
+       lzip -c /dev/sdc > file.lz
+     or
+       lzip /dev/sdc -o file.lz
 
 
 Example 10: Create a multivolume compressed tar archive with a volume size
@@ -1160,7 +1170,7 @@ Appendix A Reference source code
 ********************************
 
 /* Lzd - Educational decompressor for the lzip format
-   Copyright (C) 2013-2021 Antonio Diaz Diaz.
+   Copyright (C) 2013-2022 Antonio Diaz Diaz.
 
    This program is free software. Redistribution and use in source and
    binary forms, with or without modification, are permitted provided
@@ -1190,7 +1200,7 @@ Appendix A Reference source code
 #include <cstring>
 #include <stdint.h>
 #include <unistd.h>
-#if defined(__MSVCRT__) || defined(__OS2__) || defined(__DJGPP__)
+#if defined __MSVCRT__ || defined __OS2__ || defined __DJGPP__
 #include <fcntl.h>
 #include <io.h>
 #endif
@@ -1580,7 +1590,7 @@ int main( const int argc, const char * const argv[] )
       "See the lzip manual for an explanation of the code.\n"
       "\nUsage: %s [-d] < file.lz > file\n"
       "Lzd decompresses from standard input to standard output.\n"
-      "\nCopyright (C) 2021 Antonio Diaz Diaz.\n"
+      "\nCopyright (C) 2022 Antonio Diaz Diaz.\n"
       "License 2-clause BSD.\n"
       "This is free software: you are free to change and redistribute it.\n"
       "There is NO WARRANTY, to the extent permitted by law.\n"
@@ -1590,7 +1600,7 @@ int main( const int argc, const char * const argv[] )
     return 0;
     }
 
-#if defined(__MSVCRT__) || defined(__OS2__) || defined(__DJGPP__)
+#if defined __MSVCRT__ || defined __OS2__ || defined __DJGPP__
   setmode( STDIN_FILENO, O_BINARY );
   setmode( STDOUT_FILENO, O_BINARY );
 #endif
@@ -1672,23 +1682,23 @@ Concept index
 
 
 Tag Table:
-Node: Top208
-Node: Introduction1202
-Node: Output6930
-Node: Invoking lzip8525
-Ref: --trailing-error9314
-Node: Quality assurance18307
-Node: File format27264
-Ref: coded-dict-size28554
-Node: Algorithm29690
-Node: Stream format33090
-Ref: what-is-coded35459
-Node: Trailing data44328
-Node: Examples46589
-Ref: concat-example48189
-Node: Problems49252
-Node: Reference source code49784
-Node: Concept index64648
+Node: Top203
+Node: Introduction1198
+Node: Output6972
+Node: Invoking lzip8567
+Ref: --trailing-error9356
+Node: Quality assurance18682
+Node: Algorithm27705
+Node: File format31109
+Ref: coded-dict-size32538
+Node: Stream format33773
+Ref: what-is-coded36169
+Node: Trailing data45097
+Node: Examples47358
+Ref: concat-example48800
+Node: Problems50021
+Node: Reference source code50553
+Node: Concept index65411
 
 End Tag Table
 

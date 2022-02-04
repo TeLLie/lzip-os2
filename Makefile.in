@@ -20,7 +20,7 @@ objs = arg_parser.o lzip_index.o list.o encoder_base.o encoder.o \
 all : $(progname)
 
 $(progname) : $(objs)
-	$(CXX) $(LDFLAGS) $(CXXFLAGS) -o $@ $(objs)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(objs)
 
 main.o : main.cc
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -DPROGVERSION=\"$(pkgversion)\" -c -o $@ $<

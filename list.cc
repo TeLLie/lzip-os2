@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2021 Antonio Diaz Diaz.
+   Copyright (C) 2008-2022 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -73,38 +73,35 @@ int list_files( const std::vector< std::string > & filenames,
       set_retval( retval, lzip_index.retval() );
       continue;
       }
-    if( verbosity >= 0 )
+    if( verbosity < 0 ) continue;
+    const unsigned long long udata_size = lzip_index.udata_size();
+    const unsigned long long cdata_size = lzip_index.cdata_size();
+    total_comp += cdata_size; total_uncomp += udata_size; ++files;
+    const long members = lzip_index.members();
+    if( first_post )
       {
-      const unsigned long long udata_size = lzip_index.udata_size();
-      const unsigned long long cdata_size = lzip_index.cdata_size();
-      total_comp += cdata_size; total_uncomp += udata_size; ++files;
-      const long members = lzip_index.members();
-      if( first_post )
-        {
-        first_post = false;
-        if( verbosity >= 1 ) std::fputs( "   dict   memb  trail ", stdout );
-        std::fputs( "  uncompressed     compressed   saved  name\n", stdout );
-        }
-      if( verbosity >= 1 )
-        std::printf( "%s %5ld %6lld ",
-                     format_ds( lzip_index.dictionary_size() ), members,
-                     lzip_index.file_size() - cdata_size );
-      list_line( udata_size, cdata_size, input_filename );
-
-      if( verbosity >= 2 && members > 1 )
-        {
-        std::fputs( " member      data_pos      data_size     member_pos    member_size\n", stdout );
-        for( long i = 0; i < members; ++i )
-          {
-          const Block & db = lzip_index.dblock( i );
-          const Block & mb = lzip_index.mblock( i );
-          std::printf( "%6ld %14llu %14llu %14llu %14llu\n",
-                       i + 1, db.pos(), db.size(), mb.pos(), mb.size() );
-          }
-        first_post = true;	// reprint heading after list of members
-        }
-      std::fflush( stdout );
+      first_post = false;
+      if( verbosity >= 1 ) std::fputs( "   dict   memb  trail ", stdout );
+      std::fputs( "  uncompressed     compressed   saved  name\n", stdout );
       }
+    if( verbosity >= 1 )
+      std::printf( "%s %5ld %6lld ", format_ds( lzip_index.dictionary_size() ),
+                   members, lzip_index.file_size() - cdata_size );
+    list_line( udata_size, cdata_size, input_filename );
+
+    if( verbosity >= 2 && members > 1 )
+      {
+      std::fputs( " member      data_pos      data_size     member_pos    member_size\n", stdout );
+      for( long i = 0; i < members; ++i )
+        {
+        const Block & db = lzip_index.dblock( i );
+        const Block & mb = lzip_index.mblock( i );
+        std::printf( "%6ld %14llu %14llu %14llu %14llu\n",
+                     i + 1, db.pos(), db.size(), mb.pos(), mb.size() );
+        }
+      first_post = true;	// reprint heading after list of members
+      }
+    std::fflush( stdout );
     }
   if( verbosity >= 0 && files > 1 )
     {

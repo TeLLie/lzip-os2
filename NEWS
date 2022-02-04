@@ -1,39 +1,11 @@
-Changes in version 1.22:
+Changes in version 1.23:
 
-Lzip now reports an error if a file name is empty (lzip -t "").
+Decompression time has been reduced by 5-12% depending on the file.
 
-Option '-o, --output' now behaves like '-c, --stdout', but sending the
-output unconditionally to a file instead of to standard output. See the new
-description of '-o' in the manual. This change is backwards compatible only
-when (de)compressing from standard input alone. Therefore commands like:
-  lzip -o foo.lz - bar < foo
-must now be split into:
-  lzip -o foo.lz - < foo
-  lzip bar
-or rewritten as:
-  lzip - bar < foo > foo.lz
+In case of error in a numerical argument to a command line option, lzip
+now shows the name of the option and the range of valid values.
 
-When using '-c' or '-o', lzip now checks whether the output is a terminal
-only once.
+Several descriptions have been improved in manual, '--help', and man page.
 
-Lzip now does not even open the output file if the input file is a terminal.
-
-Lzip can now be built, tested, and installed on systems lacking a 'make'
-program. (Feature suggested by Mohammad Akhlaghi).
-
-The words 'decompressed' and 'compressed' have been replaced with the
-shorter 'out' and 'in' in the verbose output when decompressing or testing.
-
-Option '--list' now reports corruption or truncation of the last header in a
-multimenber file specifically instead of showing the generic message "Last
-member in input file is truncated or corrupt."
-
-The commands needed to extract files from a tar.lz archive have been
-documented in the manual, in the output of '--help', and in the man page.
-
-Plzip and tarlz are mentioned in the manual as alternatives for
-multiprocessors.
-
-Several fixes and improvements have been made to the manual.
-
-9 new test files have been added to the testsuite.
+The texinfo category of the manual has been changed from 'Data Compression'
+to 'Compression' to match that of gzip. (Reported by Alfred M. Szmidt).

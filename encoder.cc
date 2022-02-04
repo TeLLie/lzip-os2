@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2021 Antonio Diaz Diaz.
+   Copyright (C) 2008-2022 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -167,7 +167,7 @@ void LZ_encoder::update_distance_prices()
   }
 
 
-/* Returns the number of bytes advanced (ahead).
+/* Return the number of bytes advanced (ahead).
    trials[0]..trials[ahead-1] contain the steps to encode.
    ( trials[0].dis4 == -1 ) means literal.
    A match/rep longer or equal than match_len_limit finishes the sequence.

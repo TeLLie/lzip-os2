@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2021 Antonio Diaz Diaz.
+   Copyright (C) 2008-2022 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -31,8 +31,8 @@
 #include "decoder.h"
 
 
-/* Returns the number of bytes really read.
-   If (returned value < size) and (errno == 0), means EOF was reached.
+/* Return the number of bytes really read.
+   If (value returned < size) and (errno == 0), means EOF was reached.
 */
 int readblock( const int fd, uint8_t * const buf, const int size )
   {
@@ -50,8 +50,8 @@ int readblock( const int fd, uint8_t * const buf, const int size )
   }
 
 
-/* Returns the number of bytes really written.
-   If (returned value < size), it is always an error.
+/* Return the number of bytes really written.
+   If (value returned < size), it is always an error.
 */
 int writeblock( const int fd, const uint8_t * const buf, const int size )
   {
@@ -232,11 +232,11 @@ int LZ_decoder::decode_member( const Pretty_print & pp )
         rep0 = distance;
         }
       state.set_rep();
-      len = min_match_len + rdec.decode_len( rep_len_model, pos_state );
+      len = rdec.decode_len( rep_len_model, pos_state );
       }
     else					// match
       {
-      len = min_match_len + rdec.decode_len( match_len_model, pos_state );
+      len = rdec.decode_len( match_len_model, pos_state );
       unsigned distance = rdec.decode_tree6( bm_dis_slot[get_len_state(len)] );
       if( distance >= start_dis_model )
         {

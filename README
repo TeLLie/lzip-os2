@@ -2,13 +2,14 @@ Description
 
 Lzip is a lossless data compressor with a user interface similar to the one
 of gzip or bzip2. Lzip uses a simplified form of the 'Lempel-Ziv-Markov
-chain-Algorithm' (LZMA) stream format, chosen to maximize safety and
-interoperability. Lzip can compress about as fast as gzip (lzip -0) or
-compress most files more than bzip2 (lzip -9). Decompression speed is
-intermediate between gzip and bzip2. Lzip is better than gzip and bzip2 from
-a data recovery perspective. Lzip has been designed, written, and tested
-with great care to replace gzip and bzip2 as the standard general-purpose
-compressed format for unix-like systems.
+chain-Algorithm' (LZMA) stream format and provides a 3 factor integrity
+checking to maximize interoperability and optimize safety. Lzip can compress
+about as fast as gzip (lzip -0) or compress most files more than bzip2
+(lzip -9). Decompression speed is intermediate between gzip and bzip2.
+Lzip is better than gzip and bzip2 from a data recovery perspective. Lzip
+has been designed, written, and tested with great care to replace gzip and
+bzip2 as the standard general-purpose compressed format for unix-like
+systems.
 
 For compressing/decompressing large files on multiprocessor machines plzip
 can be much faster than lzip at the cost of a slightly reduced compression
@@ -67,7 +68,7 @@ filename.lz    becomes   filename
 filename.tlz   becomes   filename.tar
 anyothername   becomes   anyothername.out
 
-(De)compressing a file is much like copying or moving it; therefore lzip
+(De)compressing a file is much like copying or moving it. Therefore lzip
 preserves the access and modification dates, permissions, and, when
 possible, ownership of the file just as 'cp -p' does. (If the user ID or
 the group ID can't be duplicated, the file permission bits S_ISUID and
@@ -104,7 +105,7 @@ finding coding sequences of minimum size than the one currently used by lzip
 could be developed, and the resulting sequence could also be coded using the
 LZMA coding scheme.
 
-Lzip currently implements two variants of the LZMA algorithm; fast
+Lzip currently implements two variants of the LZMA algorithm: fast
 (used by option '-0') and normal (used by all other compression levels).
 
 The high compression of LZMA comes from combining two basic, well-proven
@@ -124,7 +125,7 @@ been compressed. Decompressed is used to refer to data which have undergone
 the process of decompression.
 
 
-Copyright (C) 2008-2021 Antonio Diaz Diaz.
+Copyright (C) 2008-2022 Antonio Diaz Diaz.
 
 This file is free documentation: you have unlimited permission to copy,
 distribute, and modify it.

@@ -1,3 +1,12 @@
+2022-01-24  Antonio Diaz Diaz  <antonio@gnu.org>
+
+	* Version 1.23 released.
+	* Decompression time has been reduced by 5-12% depending on the file.
+	* main.cc (getnum): Show option name and valid range if error.
+	* Improve several descriptions in manual, '--help', and man page.
+	* lzip.texi: Change GNU Texinfo category to 'Compression'.
+	  (Reported by Alfred M. Szmidt).
+
 2021-01-04  Antonio Diaz Diaz  <antonio@gnu.org>
 
 	* Version 1.22 released.
@@ -24,7 +33,7 @@
 	* main.cc: Compile on DOS with DJGPP.
 	* Fix a GCC warning about catching std::bad_alloc by value.
 	* lzip.texi: Improve description of '-0..-9', '-m', and '-s'.
-	* configure: Accept appending to CXXFLAGS, 'CXXFLAGS+=OPTIONS'.
+	* configure: Accept appending to CXXFLAGS; 'CXXFLAGS+=OPTIONS'.
 	* INSTALL: Document use of CXXFLAGS+='-D __USE_MINGW_ANSI_STDIO'.
 
 2018-02-11  Antonio Diaz Diaz  <antonio@gnu.org>
@@ -318,7 +327,7 @@
 	* Version 0.1 released.
 
 
-Copyright (C) 2008-2021 Antonio Diaz Diaz.
+Copyright (C) 2008-2022 Antonio Diaz Diaz.
 
 This file is a collection of facts, and thus it is not copyrightable,
 but just in case, you have unlimited permission to copy, distribute, and
