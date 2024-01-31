@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2022 Antonio Diaz Diaz.
+   Copyright (C) 2008-2024 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,13 +16,13 @@
 */
 
 #ifndef INT64_MAX
-#define INT64_MAX  0x7FFFFFFFFFFFFFFFLL
+#define INT64_MAX 0x7FFFFFFFFFFFFFFFLL
 #endif
 
 
 class Block
   {
-  long long pos_, size_;		// pos + size <= INT64_MAX
+  long long pos_, size_;	// pos >= 0, size >= 0, pos + size <= INT64_MAX
 
 public:
   Block( const long long p, const long long s ) : pos_( p ), size_( s ) {}
@@ -43,9 +43,11 @@ class Lzip_index
     Block dblock, mblock;		// data block, member block
     unsigned dictionary_size;
 
-    Member( const long long dp, const long long ds,
-            const long long mp, const long long ms, const unsigned dict_size )
-      : dblock( dp, ds ), mblock( mp, ms ), dictionary_size( dict_size ) {}
+    Member( const long long dpos, const long long dsize,
+            const long long mpos, const long long msize,
+            const unsigned dict_size )
+      : dblock( dpos, dsize ), mblock( mpos, msize ),
+        dictionary_size( dict_size ) {}
     };
 
   std::vector< Member > member_vector;
@@ -54,16 +56,16 @@ class Lzip_index
   int retval_;
   unsigned dictionary_size_;	// largest dictionary size in the file
 
-  bool check_header_error( const Lzip_header & header );
+  bool check_header( const Lzip_header & header );
   void set_errno_error( const char * const msg );
   void set_num_error( const char * const msg, unsigned long long num );
-  bool read_header( const int fd, Lzip_header & header, const long long pos );
+  bool read_header( const int fd, Lzip_header & header, const long long pos,
+                    const bool ignore_marking );
   bool skip_trailing_data( const int fd, unsigned long long & pos,
-         const bool ignore_trailing, const bool loose_trailing );
+                           const Cl_options & cl_opts );
 
 public:
-  Lzip_index( const int infd, const bool ignore_trailing,
-              const bool loose_trailing );
+  Lzip_index( const int infd, const Cl_options & cl_opts );
 
   long members() const { return member_vector.size(); }
   const std::string & error() const { return error_; }

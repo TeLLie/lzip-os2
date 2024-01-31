@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2022 Antonio Diaz Diaz.
+   Copyright (C) 2008-2024 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
 */
 /*
    Exit status: 0 for a normal exit, 1 for environmental problems
-   (file not found, invalid flags, I/O errors, etc), 2 to indicate a
-   corrupt or invalid input file, 3 for an internal consistency error
-   (e.g., bug) which caused lzip to panic.
+   (file not found, invalid command-line options, I/O errors, etc), 2 to
+   indicate a corrupt or invalid input file, 3 for an internal consistency
+   error (e.g., bug) which caused lzip to panic.
 */
 
 #define _FILE_OFFSET_BITS 64
@@ -26,7 +26,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cerrno>
-#include <climits>
+#include <climits>		// CHAR_BIT, SSIZE_MAX
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
@@ -35,7 +35,7 @@
 #include <string>
 #include <vector>
 #include <fcntl.h>
-#include <stdint.h>
+#include <stdint.h>		// SIZE_MAX
 #include <unistd.h>
 #include <utime.h>
 #include <sys/stat.h>
@@ -85,7 +85,7 @@ int verbosity = 0;
 namespace {
 
 const char * const program_name = "lzip";
-const char * const program_year = "2022";
+const char * const program_year = "2024";
 const char * invocation_name = program_name;		// default value
 
 const struct { const char * from; const char * to; } known_extensions[] = {
@@ -112,14 +112,15 @@ void show_help()
   {
   std::printf( "Lzip is a lossless data compressor with a user interface similar to the one\n"
                "of gzip or bzip2. Lzip uses a simplified form of the 'Lempel-Ziv-Markov\n"
-               "chain-Algorithm' (LZMA) stream format and provides a 3 factor integrity\n"
-               "checking to maximize interoperability and optimize safety. Lzip can compress\n"
-               "about as fast as gzip (lzip -0) or compress most files more than bzip2\n"
-               "(lzip -9). Decompression speed is intermediate between gzip and bzip2.\n"
-               "Lzip is better than gzip and bzip2 from a data recovery perspective. Lzip\n"
-               "has been designed, written, and tested with great care to replace gzip and\n"
-               "bzip2 as the standard general-purpose compressed format for unix-like\n"
-               "systems.\n"
+               "chain-Algorithm' (LZMA) stream format to maximize interoperability. The\n"
+               "maximum dictionary size is 512 MiB so that any lzip file can be decompressed\n"
+               "on 32-bit machines. Lzip provides accurate and robust 3-factor integrity\n"
+               "checking. Lzip can compress about as fast as gzip (lzip -0) or compress most\n"
+               "files more than bzip2 (lzip -9). Decompression speed is intermediate between\n"
+               "gzip and bzip2. Lzip is better than gzip and bzip2 from a data recovery\n"
+               "perspective. Lzip has been designed, written, and tested with great care to\n"
+               "replace gzip and bzip2 as the standard general-purpose compressed format for\n"
+               "Unix-like systems.\n"
                "\nUsage: %s [options] [files]\n", invocation_name );
   std::printf( "\nOptions:\n"
                "  -h, --help                     display this help and exit\n"
@@ -127,7 +128,7 @@ void show_help()
                "  -a, --trailing-error           exit with error status if trailing data\n"
                "  -b, --member-size=<bytes>      set member size limit in bytes\n"
                "  -c, --stdout                   write to standard output, keep input files\n"
-               "  -d, --decompress               decompress\n"
+               "  -d, --decompress               decompress, test compressed file integrity\n"
                "  -f, --force                    overwrite existing output files\n"
                "  -F, --recompress               force re-compression of compressed files\n"
                "  -k, --keep                     keep (don't delete) input files\n"
@@ -142,25 +143,27 @@ void show_help()
                "  -0 .. -9                       set compression level [default 6]\n"
                "      --fast                     alias for -0\n"
                "      --best                     alias for -9\n"
+               "      --empty-error              exit with error status if empty member in file\n"
+               "      --marking-error            exit with error status if 1st LZMA byte not 0\n"
                "      --loose-trailing           allow trailing data seeming corrupt header\n"
                "\nIf no file names are given, or if a file is '-', lzip compresses or\n"
                "decompresses from standard input to standard output.\n"
                "Numbers may be followed by a multiplier: k = kB = 10^3 = 1000,\n"
                "Ki = KiB = 2^10 = 1024, M = 10^6, Mi = 2^20, G = 10^9, Gi = 2^30, etc...\n"
-               "Dictionary sizes 12 to 29 are interpreted as powers of two, meaning 2^12\n"
-               "to 2^29 bytes.\n"
-               "\nThe bidimensional parameter space of LZMA can't be mapped to a linear\n"
-               "scale optimal for all files. If your files are large, very repetitive,\n"
-               "etc, you may need to use the options --dictionary-size and --match-length\n"
-               "directly to achieve optimal performance.\n"
+               "Dictionary sizes 12 to 29 are interpreted as powers of two, meaning 2^12 to\n"
+               "2^29 bytes.\n"
+               "\nThe bidimensional parameter space of LZMA can't be mapped to a linear scale\n"
+               "optimal for all files. If your files are large, very repetitive, etc, you\n"
+               "may need to use the options --dictionary-size and --match-length directly\n"
+               "to achieve optimal performance.\n"
                "\nTo extract all the files from archive 'foo.tar.lz', use the commands\n"
                "'tar -xf foo.tar.lz' or 'lzip -cd foo.tar.lz | tar -xf -'.\n"
-               "\nExit status: 0 for a normal exit, 1 for environmental problems (file\n"
-               "not found, invalid flags, I/O errors, etc), 2 to indicate a corrupt or\n"
-               "invalid input file, 3 for an internal consistency error (e.g., bug) which\n"
-               "caused lzip to panic.\n"
+               "\nExit status: 0 for a normal exit, 1 for environmental problems\n"
+               "(file not found, invalid command-line options, I/O errors, etc), 2 to\n"
+               "indicate a corrupt or invalid input file, 3 for an internal consistency\n"
+               "error (e.g., bug) which caused lzip to panic.\n"
                "\nThe ideas embodied in lzip are due to (at least) the following people:\n"
-               "Abraham Lempel and Jacob Ziv (for the LZ algorithm), Andrey Markov (for the\n"
+               "Abraham Lempel and Jacob Ziv (for the LZ algorithm), Andrei Markov (for the\n"
                "definition of Markov chains), G.N.N. Martin (for the definition of range\n"
                "encoding), Igor Pavlov (for putting all the above together in LZMA), and\n"
                "Julian Seward (for bzip2's CLI).\n"
@@ -204,16 +207,15 @@ const char * bad_version( const unsigned version )
 
 const char * format_ds( const unsigned dictionary_size )
   {
-  enum { bufsize = 16, factor = 1024 };
+  enum { bufsize = 16, factor = 1024, n = 3 };
   static char buf[bufsize];
-  const char * const prefix[8] =
-    { "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi", "Yi" };
+  const char * const prefix[n] = { "Ki", "Mi", "Gi" };
   const char * p = "";
   const char * np = "  ";
   unsigned num = dictionary_size;
   bool exact = ( num % factor == 0 );
 
-  for( int i = 0; i < 8 && ( num > 9999 || ( exact && num >= factor ) ); ++i )
+  for( int i = 0; i < n && ( num > 9999 || ( exact && num >= factor ) ); ++i )
     { num /= factor; if( num % factor != 0 ) exact = false;
       p = prefix[i]; np = ""; }
   snprintf( buf, bufsize, "%s%4u %sB", np, num, p );
@@ -228,12 +230,12 @@ void show_header( const unsigned dictionary_size )
 
 namespace {
 
-// separate large numbers >= 100_000 in groups of 3 digits using '_'
+// separate numbers of 5 or more digits in groups of 3 digits using '_'
 const char * format_num3( unsigned long long num )
   {
-  const char * const si_prefix = "kMGTPEZY";
-  const char * const binary_prefix = "KMGTPEZY";
-  enum { buffers = 8, bufsize = 4 * sizeof (long long) };
+  enum { buffers = 8, bufsize = 4 * sizeof num, n = 10 };
+  const char * const si_prefix = "kMGTPEZYRQ";
+  const char * const binary_prefix = "KMGTPEZYRQ";
   static char buffer[buffers][bufsize];	// circle of static buffers for printf
   static int current = 0;
 
@@ -243,15 +245,15 @@ const char * format_num3( unsigned long long num )
   if( num > 1024 )
     {
     char prefix = 0;			// try binary first, then si
-    for( int i = 0; i < 8 && num >= 1024 && num % 1024 == 0; ++i )
+    for( int i = 0; i < n && num != 0 && num % 1024 == 0; ++i )
       { num /= 1024; prefix = binary_prefix[i]; }
     if( prefix ) *(--p) = 'i';
     else
-      for( int i = 0; i < 8 && num >= 1000 && num % 1000 == 0; ++i )
+      for( int i = 0; i < n && num != 0 && num % 1000 == 0; ++i )
         { num /= 1000; prefix = si_prefix[i]; }
     if( prefix ) *(--p) = prefix;
     }
-  const bool split = num >= 100000;
+  const bool split = num >= 10000;
 
   for( int i = 0; ; )
     {
@@ -262,6 +264,16 @@ const char * format_num3( unsigned long long num )
   }
 
 
+void show_option_error( const char * const arg, const char * const msg,
+                        const char * const option_name )
+  {
+  if( verbosity >= 0 )
+    std::fprintf( stderr, "%s: '%s': %s option '%s'.\n",
+                  program_name, arg, msg, option_name );
+  }
+
+
+// Recognized formats: <num>k, <num>Ki, <num>[MGTPEZYRQ][i]
 unsigned long long getnum( const char * const arg,
                            const char * const option_name,
                            const unsigned long long llimit,
@@ -271,12 +283,8 @@ unsigned long long getnum( const char * const arg,
   errno = 0;
   unsigned long long result = strtoull( arg, &tail, 0 );
   if( tail == arg )
-    {
-    if( verbosity >= 0 )
-      std::fprintf( stderr, "%s: Bad or missing numerical argument in "
-                    "option '%s'.\n", program_name, option_name );
-    std::exit( 1 );
-    }
+    { show_option_error( arg, "Bad or missing numerical argument in",
+                         option_name ); std::exit( 1 ); }
 
   if( !errno && tail[0] )
     {
@@ -284,6 +292,8 @@ unsigned long long getnum( const char * const arg,
     int exponent = 0;				// 0 = bad multiplier
     switch( tail[0] )
       {
+      case 'Q': exponent = 10; break;
+      case 'R': exponent = 9; break;
       case 'Y': exponent = 8; break;
       case 'Z': exponent = 7; break;
       case 'E': exponent = 6; break;
@@ -295,12 +305,8 @@ unsigned long long getnum( const char * const arg,
       case 'k': if( factor == 1000 ) exponent = 1; break;
       }
     if( exponent <= 0 )
-      {
-      if( verbosity >= 0 )
-        std::fprintf( stderr, "%s: Bad multiplier in numerical argument of "
-                      "option '%s'.\n", program_name, option_name );
-      std::exit( 1 );
-      }
+      { show_option_error( arg, "Bad multiplier in numerical argument of",
+                           option_name ); std::exit( 1 ); }
     for( int i = 0; i < exponent; ++i )
       {
       if( ulimit / factor >= result ) result *= factor;
@@ -311,8 +317,8 @@ unsigned long long getnum( const char * const arg,
   if( errno )
     {
     if( verbosity >= 0 )
-      std::fprintf( stderr, "%s: Numerical argument out of limits [%s,%s] "
-                    "in option '%s'.\n", program_name, format_num3( llimit ),
+      std::fprintf( stderr, "%s: '%s': Value out of limits [%s,%s] in "
+                    "option '%s'.\n", program_name, arg, format_num3( llimit ),
                     format_num3( ulimit ), option_name );
     std::exit( 1 );
     }
@@ -382,7 +388,7 @@ void set_d_outname( const std::string & name, const int eindex )
     }
   output_filename = name; output_filename += ".out";
   if( verbosity >= 1 )
-    std::fprintf( stderr, "%s: Can't guess original name for '%s' -- using '%s'\n",
+    std::fprintf( stderr, "%s: %s: Can't guess original name -- using '%s'\n",
                   program_name, name.c_str(), output_filename.c_str() );
   }
 
@@ -404,9 +410,9 @@ int open_instream( const char * const name, struct stat * const in_statsp,
     if( i != 0 || ( !S_ISREG( mode ) && ( !can_read || one_to_one ) ) )
       {
       if( verbosity >= 0 )
-        std::fprintf( stderr, "%s: Input file '%s' is not a regular file%s.\n",
+        std::fprintf( stderr, "%s: %s: Input file is not a regular file%s.\n",
                       program_name, name, ( can_read && one_to_one ) ?
-                      ",\n      and neither '-c' nor '-o' were specified" : "" );
+                      ",\n  and neither '-c' nor '-o' were specified" : "" );
       close( infd );
       infd = -1;
       }
@@ -423,11 +429,38 @@ int open_instream2( const char * const name, struct stat * const in_statsp,
   if( program_mode == m_compress && !recompress && eindex >= 0 )
     {
     if( verbosity >= 0 )
-      std::fprintf( stderr, "%s: Input file '%s' already has '%s' suffix.\n",
+      std::fprintf( stderr, "%s: %s: Input file already has '%s' suffix.\n",
                     program_name, name, known_extensions[eindex].from );
     return -1;
     }
   return open_instream( name, in_statsp, one_to_one, false );
+  }
+
+
+bool make_dirs( const std::string & name )
+  {
+  int i = name.size();
+  while( i > 0 && name[i-1] != '/' ) --i;	// remove last component
+  while( i > 0 && name[i-1] == '/' ) --i;	// remove slash(es)
+  const int dirsize = i;	// size of dirname without trailing slash(es)
+
+  for( i = 0; i < dirsize; )	// if dirsize == 0, dirname is '/' or empty
+    {
+    while( i < dirsize && name[i] == '/' ) ++i;
+    const int first = i;
+    while( i < dirsize && name[i] != '/' ) ++i;
+    if( first < i )
+      {
+      const std::string partial( name, 0, i );
+      const mode_t mode = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
+      struct stat st;
+      if( stat( partial.c_str(), &st ) == 0 )
+        { if( !S_ISDIR( st.st_mode ) ) { errno = ENOTDIR; return false; } }
+      else if( mkdir( partial.c_str(), mode ) != 0 && errno != EEXIST )
+        return false;		// if EEXIST, another process created the dir
+      }
+    }
+  return true;
   }
 
 
@@ -439,18 +472,21 @@ bool open_outstream( const bool force, const bool protect )
   int flags = O_CREAT | O_WRONLY | O_BINARY;
   if( force ) flags |= O_TRUNC; else flags |= O_EXCL;
 
-  outfd = open( output_filename.c_str(), flags, outfd_mode );
-  if( outfd >= 0 ) delete_output_on_interrupt = true;
-  else if( verbosity >= 0 )
-    {
+  outfd = -1;
+  if( output_filename.size() &&
+      output_filename[output_filename.size()-1] == '/' ) errno = EISDIR;
+  else {
+    if( !protect && !make_dirs( output_filename ) )
+      { show_file_error( output_filename.c_str(),
+          "Error creating intermediate directory", errno ); return false; }
+    outfd = open( output_filename.c_str(), flags, outfd_mode );
+    if( outfd >= 0 ) { delete_output_on_interrupt = true; return true; }
     if( errno == EEXIST )
-      std::fprintf( stderr, "%s: Output file '%s' already exists, skipping.\n",
-                    program_name, output_filename.c_str() );
-    else
-      std::fprintf( stderr, "%s: Can't create output file '%s': %s\n",
-                    program_name, output_filename.c_str(), std::strerror( errno ) );
+      { show_file_error( output_filename.c_str(),
+          "Output file already exists, skipping." ); return false; }
     }
-  return ( outfd >= 0 );
+  show_file_error( output_filename.c_str(), "Can't create output file", errno );
+  return false;
   }
 
 
@@ -468,12 +504,11 @@ void cleanup_and_fail( const int retval )
   if( delete_output_on_interrupt )
     {
     delete_output_on_interrupt = false;
-    if( verbosity >= 0 )
-      std::fprintf( stderr, "%s: Deleting output file '%s', if it exists.\n",
-                    program_name, output_filename.c_str() );
+    show_file_error( output_filename.c_str(),
+                     "Deleting output file, if it exists." );
     if( outfd >= 0 ) { close( outfd ); outfd = -1; }
     if( std::remove( output_filename.c_str() ) != 0 && errno != ENOENT )
-      show_error( "WARNING: deletion of output file (apparently) failed." );
+      show_error( "warning: deletion of output file failed", errno );
     }
   std::exit( retval );
   }
@@ -517,7 +552,7 @@ void close_and_set_permissions( const struct stat * const in_statsp )
   if( in_statsp )
     {
     const mode_t mode = in_statsp->st_mode;
-    // fchown will in many cases return with EPERM, which can be safely ignored.
+    // fchown in many cases returns with EPERM, which can be safely ignored.
     if( fchown( outfd, in_statsp->st_uid, in_statsp->st_gid ) == 0 )
       { if( fchmod( outfd, mode ) != 0 ) warning = true; }
     else
@@ -526,10 +561,8 @@ void close_and_set_permissions( const struct stat * const in_statsp )
         warning = true;
     }
   if( close( outfd ) != 0 )
-    {
-    show_error( "Error closing output file", errno );
-    cleanup_and_fail( 1 );
-    }
+    { show_file_error( output_filename.c_str(), "Error closing output file",
+                       errno ); cleanup_and_fail( 1 ); }
   outfd = -1;
   delete_output_on_interrupt = false;
   if( in_statsp )
@@ -540,7 +573,8 @@ void close_and_set_permissions( const struct stat * const in_statsp )
     if( utime( output_filename.c_str(), &t ) != 0 ) warning = true;
     }
   if( warning && verbosity >= 1 )
-    show_error( "Can't change output file attributes." );
+    show_file_error( output_filename.c_str(),
+                     "warning: can't change output file attributes", errno );
   }
 
 
@@ -627,7 +661,7 @@ int compress( const unsigned long long cfile_size,
   }
 
 
-unsigned char xdigit( const unsigned value )
+unsigned char xdigit( const unsigned value )	// hex digit for 'value'
   {
   if( value <= 9 ) return '0' + value;
   if( value <= 15 ) return 'A' + value - 10;
@@ -657,13 +691,13 @@ bool show_trailing_data( const uint8_t * const data, const int size,
     pp( msg.c_str() );
     if( ignore_trailing == 0 ) show_file_error( pp.name(), trailing_msg );
     }
-  return ( ignore_trailing > 0 );
+  return ignore_trailing > 0;
   }
 
 
 int decompress( const unsigned long long cfile_size, const int infd,
-                const Pretty_print & pp, const bool ignore_trailing,
-                const bool loose_trailing, const bool testing )
+                const Cl_options & cl_opts, const Pretty_print & pp,
+                const bool testing )
   {
   unsigned long long partial_file_pos = 0;
   Range_decoder rdec( infd );
@@ -673,34 +707,31 @@ int decompress( const unsigned long long cfile_size, const int infd,
     {
     Lzip_header header;
     rdec.reset_member_position();
-    const int size = rdec.read_data( header.data, Lzip_header::size );
+    const int size = rdec.read_data( header.data, header.size );
     if( rdec.finished() )			// End Of File
       {
       if( first_member )
         { show_file_error( pp.name(), "File ends unexpectedly at member header." );
           retval = 2; }
-      else if( header.verify_prefix( size ) )
+      else if( header.check_prefix( size ) )
         { pp( "Truncated header in multimember file." );
-          show_trailing_data( header.data, size, pp, true, -1 );
-          retval = 2; }
-      else if( size > 0 && !show_trailing_data( header.data, size, pp,
-                                                true, ignore_trailing ) )
-        retval = 2;
+          show_trailing_data( header.data, size, pp, true, -1 ); retval = 2; }
+      else if( size > 0 && !show_trailing_data( header.data, size, pp, true,
+                                 cl_opts.ignore_trailing ) ) retval = 2;
       break;
       }
-    if( !header.verify_magic() )
+    if( !header.check_magic() )
       {
       if( first_member )
         { show_file_error( pp.name(), bad_magic_msg ); retval = 2; }
-      else if( !loose_trailing && header.verify_corrupt() )
+      else if( !cl_opts.loose_trailing && header.check_corrupt() )
         { pp( corrupt_mm_msg );
-          show_trailing_data( header.data, size, pp, false, -1 );
-          retval = 2; }
-      else if( !show_trailing_data( header.data, size, pp, false, ignore_trailing ) )
-        retval = 2;
+          show_trailing_data( header.data, size, pp, false, -1 ); retval = 2; }
+      else if( !show_trailing_data( header.data, size, pp, false,
+                                    cl_opts.ignore_trailing ) ) retval = 2;
       break;
       }
-    if( !header.verify_version() )
+    if( !header.check_version() )
       { pp( bad_version( header.version() ) ); retval = 2; break; }
     const unsigned dictionary_size = header.dictionary_size();
     if( !isvalid_ds( dictionary_size ) )
@@ -710,7 +741,7 @@ int decompress( const unsigned long long cfile_size, const int infd,
 
     LZ_decoder decoder( rdec, dictionary_size, outfd );
     show_dprogress( cfile_size, partial_file_pos, &rdec, &pp );	// init
-    const int result = decoder.decode_member( pp );
+    const int result = decoder.decode_member( cl_opts, pp );
     partial_file_pos += rdec.member_position();
     if( result != 0 )
       {
@@ -721,6 +752,8 @@ int decompress( const unsigned long long cfile_size, const int infd,
                       "File ends unexpectedly" : "Decoder error",
                       partial_file_pos );
         }
+      else if( result == 5 ) pp( empty_msg );
+      else if( result == 6 ) pp( marking_msg );
       retval = 2; break;
       }
     if( verbosity >= 2 )
@@ -827,8 +860,8 @@ void show_dprogress( const unsigned long long cfile_size,
 
 int main( const int argc, const char * const argv[] )
   {
-  /* Mapping from gzip/bzip2 style 1..9 compression modes
-     to the corresponding LZMA compression modes. */
+  /* Mapping from gzip/bzip2 style 0..9 compression levels to the
+     corresponding LZMA compression parameters. */
   const Lzma_options option_mapping[] =
     {
     { 1 << 16,  16 },		// -0
@@ -842,54 +875,55 @@ int main( const int argc, const char * const argv[] )
     { 3 << 23, 132 },		// -8
     { 1 << 25, 273 } };		// -9
   Lzma_options encoder_options = option_mapping[6];	// default = "-6"
-  const unsigned long long max_member_size = 0x0008000000000000ULL; /* 2 PiB */
-  const unsigned long long max_volume_size = 0x4000000000000000ULL; /* 4 EiB */
+  const unsigned long long max_member_size = 0x0008000000000000ULL; // 2 PiB
+  const unsigned long long max_volume_size = 0x4000000000000000ULL; // 4 EiB
   unsigned long long member_size = max_member_size;
   unsigned long long volume_size = 0;
   std::string default_output_filename;
   Mode program_mode = m_compress;
+  Cl_options cl_opts;		// command-line options
   bool force = false;
-  bool ignore_trailing = true;
   bool keep_input_files = false;
-  bool loose_trailing = false;
   bool recompress = false;
   bool to_stdout = false;
   bool zero = false;
   if( argc > 0 ) invocation_name = argv[0];
 
-  enum { opt_lt = 256 };
+  enum { opt_eer = 256, opt_lt, opt_mer };
   const Arg_parser::Option options[] =
     {
-    { '0', "fast",              Arg_parser::no  },
-    { '1', 0,                   Arg_parser::no  },
-    { '2', 0,                   Arg_parser::no  },
-    { '3', 0,                   Arg_parser::no  },
-    { '4', 0,                   Arg_parser::no  },
-    { '5', 0,                   Arg_parser::no  },
-    { '6', 0,                   Arg_parser::no  },
-    { '7', 0,                   Arg_parser::no  },
-    { '8', 0,                   Arg_parser::no  },
-    { '9', "best",              Arg_parser::no  },
-    { 'a', "trailing-error",    Arg_parser::no  },
-    { 'b', "member-size",       Arg_parser::yes },
-    { 'c', "stdout",            Arg_parser::no  },
-    { 'd', "decompress",        Arg_parser::no  },
-    { 'f', "force",             Arg_parser::no  },
-    { 'F', "recompress",        Arg_parser::no  },
-    { 'h', "help",              Arg_parser::no  },
-    { 'k', "keep",              Arg_parser::no  },
-    { 'l', "list",              Arg_parser::no  },
-    { 'm', "match-length",      Arg_parser::yes },
-    { 'n', "threads",           Arg_parser::yes },
-    { 'o', "output",            Arg_parser::yes },
-    { 'q', "quiet",             Arg_parser::no  },
-    { 's', "dictionary-size",   Arg_parser::yes },
-    { 'S', "volume-size",       Arg_parser::yes },
-    { 't', "test",              Arg_parser::no  },
-    { 'v', "verbose",           Arg_parser::no  },
-    { 'V', "version",           Arg_parser::no  },
-    { opt_lt, "loose-trailing", Arg_parser::no  },
-    {  0, 0,                    Arg_parser::no  } };
+    { '0', "fast",               Arg_parser::no  },
+    { '1', 0,                    Arg_parser::no  },
+    { '2', 0,                    Arg_parser::no  },
+    { '3', 0,                    Arg_parser::no  },
+    { '4', 0,                    Arg_parser::no  },
+    { '5', 0,                    Arg_parser::no  },
+    { '6', 0,                    Arg_parser::no  },
+    { '7', 0,                    Arg_parser::no  },
+    { '8', 0,                    Arg_parser::no  },
+    { '9', "best",               Arg_parser::no  },
+    { 'a', "trailing-error",     Arg_parser::no  },
+    { 'b', "member-size",        Arg_parser::yes },
+    { 'c', "stdout",             Arg_parser::no  },
+    { 'd', "decompress",         Arg_parser::no  },
+    { 'f', "force",              Arg_parser::no  },
+    { 'F', "recompress",         Arg_parser::no  },
+    { 'h', "help",               Arg_parser::no  },
+    { 'k', "keep",               Arg_parser::no  },
+    { 'l', "list",               Arg_parser::no  },
+    { 'm', "match-length",       Arg_parser::yes },
+    { 'n', "threads",            Arg_parser::yes },
+    { 'o', "output",             Arg_parser::yes },
+    { 'q', "quiet",              Arg_parser::no  },
+    { 's', "dictionary-size",    Arg_parser::yes },
+    { 'S', "volume-size",        Arg_parser::yes },
+    { 't', "test",               Arg_parser::no  },
+    { 'v', "verbose",            Arg_parser::no  },
+    { 'V', "version",            Arg_parser::no  },
+    { opt_eer, "empty-error",    Arg_parser::no  },
+    { opt_lt,  "loose-trailing", Arg_parser::no  },
+    { opt_mer, "marking-error",  Arg_parser::no  },
+    {  0, 0,                     Arg_parser::no  } };
 
   const Arg_parser parser( argc, argv, options );
   if( parser.error().size() )				// bad option
@@ -909,7 +943,7 @@ int main( const int argc, const char * const argv[] )
       case '5': case '6': case '7': case '8': case '9':
                 zero = ( code == '0' );
                 encoder_options = option_mapping[code-'0']; break;
-      case 'a': ignore_trailing = false; break;
+      case 'a': cl_opts.ignore_trailing = false; break;
       case 'b': member_size = getnum( arg, pn, 100000, max_member_size ); break;
       case 'c': to_stdout = true; break;
       case 'd': set_mode( program_mode, m_decompress ); break;
@@ -931,8 +965,10 @@ int main( const int argc, const char * const argv[] )
       case 't': set_mode( program_mode, m_test ); break;
       case 'v': if( verbosity < 4 ) ++verbosity; break;
       case 'V': show_version(); return 0;
-      case opt_lt: loose_trailing = true; break;
-      default : internal_error( "uncaught option." );
+      case opt_eer: cl_opts.ignore_empty = false; break;
+      case opt_lt:  cl_opts.loose_trailing = true; break;
+      case opt_mer: cl_opts.ignore_marking = false; break;
+      default: internal_error( "uncaught option." );
       }
     } // end process options
 
@@ -950,8 +986,7 @@ int main( const int argc, const char * const argv[] )
     }
   if( filenames.empty() ) filenames.push_back("-");
 
-  if( program_mode == m_list )
-    return list_files( filenames, ignore_trailing, loose_trailing );
+  if( program_mode == m_list ) return list_files( filenames, cl_opts );
 
   if( program_mode == m_compress )
     {
@@ -981,11 +1016,11 @@ int main( const int argc, const char * const argv[] )
   int retval = 0;
   const bool one_to_one = !to_stdout && program_mode != m_test && !to_file;
   bool stdin_used = false;
+  struct stat in_stats;
   for( unsigned i = 0; i < filenames.size(); ++i )
     {
     std::string input_filename;
     int infd;
-    struct stat in_stats;
 
     pp.set_name( filenames[i] );
     if( filenames[i] == "-" )
@@ -1002,7 +1037,7 @@ int main( const int argc, const char * const argv[] )
                              eindex, one_to_one, recompress );
       if( infd < 0 ) { set_retval( retval, 1 ); continue; }
       if( !check_tty_in( pp.name(), infd, program_mode, retval ) ) continue;
-      if( one_to_one )			// open outfd after verifying infd
+      if( one_to_one )			// open outfd after checking infd
         {
         if( program_mode == m_compress )
           set_c_outname( input_filename, true, true, volume_size > 0 );
@@ -1015,7 +1050,7 @@ int main( const int argc, const char * const argv[] )
     if( one_to_one && !check_tty_out( program_mode ) )
       { set_retval( retval, 1 ); return retval; }	// don't delete a tty
 
-    if( to_file && outfd < 0 )		// open outfd after verifying infd
+    if( to_file && outfd < 0 )		// open outfd after checking infd
       {
       if( program_mode == m_compress ) set_c_outname( default_output_filename,
                                        filenames_given, false, volume_size > 0 );
@@ -1035,8 +1070,7 @@ int main( const int argc, const char * const argv[] )
         tmp = compress( cfile_size, member_size, volume_size, infd,
                         encoder_options, pp, in_statsp, zero );
       else
-        tmp = decompress( cfile_size, infd, pp, ignore_trailing,
-                          loose_trailing, program_mode == m_test );
+        tmp = decompress( cfile_size, infd, cl_opts, pp, program_mode == m_test );
       }
     catch( std::bad_alloc & )
       { pp( ( program_mode == m_compress ) ?
@@ -1057,7 +1091,9 @@ int main( const int argc, const char * const argv[] )
         ( program_mode != m_compress || volume_size == 0 ) )
       std::remove( input_filename.c_str() );
     }
-  if( delete_output_on_interrupt ) close_and_set_permissions( 0 );	// -o
+  if( delete_output_on_interrupt )					// -o
+    close_and_set_permissions( ( retval == 0 && !stdin_used &&
+      filenames_given && filenames.size() == 1 ) ? &in_stats : 0 );
   else if( outfd >= 0 && close( outfd ) != 0 )				// -c
     {
     show_error( "Error closing stdout", errno );

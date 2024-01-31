@@ -1,3 +1,15 @@
+2024-01-26  Antonio Diaz Diaz  <antonio@gnu.org>
+
+	* Version 1.24 released.
+	* New options '--empty-error' and '--marking-error'.
+	* main.cc: Reformat file diagnostics as 'PROGRAM: FILE: MESSAGE'.
+	  (show_option_error): New function showing argument and option name.
+	  (main): Make -o preserve date/mode/owner if 1 input file.
+	  (open_outstream): Create missing intermediate directories.
+	* lzip.h: Rename verify_* to check_*.
+	* configure, Makefile.in: New variable 'MAKEINFO'.
+	* testsuite: New test files fox6.lz, fox6_mark.lz.
+
 2022-01-24  Antonio Diaz Diaz  <antonio@gnu.org>
 
 	* Version 1.23 released.
@@ -62,7 +74,7 @@
 	* Decompression time has been reduced by 2%.
 	* main.cc: Continue testing if any input file is a terminal.
 	* main.cc: Show trailing data in both hexadecimal and ASCII.
-	* encoder.cc (Matchfinder_base): Verify the size passed to new.
+	* encoder.cc (Matchfinder_base): Check the size passed to new.
 	* lzip_index.cc: Improve detection of bad dict and trailing data.
 	* lzip.h: Unify messages for bad magic, trailing data, etc.
 
@@ -146,8 +158,8 @@
 	* Compression time of option '-0' has been reduced by 2%.
 	* main.cc (decompress): Print only one status line for each
 	  multimember file when only one '-v' is specified.
-	* main.cc (decompress): Print up to 6 bytes of trailing data
-	  when '-vvvv' is specified.
+	* main.cc (decompress): Print up to 6 bytes of trailing data when
+	  '-vvvv' is specified.
 	* main.cc (open_instream): Don't show the message
 	  " and '--stdout' was not specified" for directories, etc.
 	* lziprecover.cc: If '-v' is not specified show errors only.
@@ -176,8 +188,8 @@
 	  This change also prevents (harmless) access to uninitialized
 	  memory when decompressing a corrupt file.
 	* lziprecover.cc: New options '-f, --force' and '-o, --output'.
-	* lziprecover.cc: New option '-s, --split' to select the until
-	  now only operation of splitting multimember files.
+	* lziprecover.cc: New option '-s, --split' to select the until now
+	  only operation of splitting multimember files.
 	* lziprecover.cc: If no operation is specified, warn the user and do
 	  nothing.
 	* main.cc: Fix warning about fchown's return value being ignored.
@@ -251,7 +263,7 @@
 	* Lzdiff and lzgrep now accept '-h' for '--help' and
 	  '-V' for '--version'.
 	* Makefile.in: Man page is now installed by default.
-	* check.sh: Verify that files are opened in binary mode.
+	* check.sh: Check that files are opened in binary mode.
 
 2009-01-24  Antonio Diaz Diaz  <ant_diaz@teleline.es>
 
@@ -276,8 +288,8 @@
 
 	* Version 1.2 released.
 	* encoder.cc: A 1-byte read outside allocated memory has been fixed.
-	* lzip.h: Dictionary size limit has been reduced to 512MiB because
-	  setting it to 1GiB causes overflow of a 32 bit integer.
+	* lzip.h: Dictionary size limit has been reduced to 512 MiB because
+	  setting it to 1 GiB causes overflow of a 32 bit integer.
 	* Add 'lzdiff', a diff/cmp wrapper for gzip, bzip2, lzip and
 	  non-compressed files.
 	* Add 'lzgrep', a grep wrapper for gzip, bzip2, lzip and
@@ -327,8 +339,7 @@
 	* Version 0.1 released.
 
 
-Copyright (C) 2008-2022 Antonio Diaz Diaz.
+Copyright (C) 2008-2024 Antonio Diaz Diaz.
 
-This file is a collection of facts, and thus it is not copyrightable,
-but just in case, you have unlimited permission to copy, distribute, and
-modify it.
+This file is a collection of facts, and thus it is not copyrightable, but just
+in case, you have unlimited permission to copy, distribute, and modify it.

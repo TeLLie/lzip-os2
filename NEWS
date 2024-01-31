@@ -1,11 +1,20 @@
-Changes in version 1.23:
+Changes in version 1.24:
 
-Decompression time has been reduced by 5-12% depending on the file.
+The option '--empty-error', which forces exit status 2 if any empty member
+is found, has been added.
 
-In case of error in a numerical argument to a command line option, lzip
-now shows the name of the option and the range of valid values.
+The option '--marking-error', which forces exit status 2 if the first LZMA
+byte is non-zero in any member, has been added.
 
-Several descriptions have been improved in manual, '--help', and man page.
+File diagnostics have been reformatted as 'PROGRAM: FILE: MESSAGE'.
 
-The texinfo category of the manual has been changed from 'Data Compression'
-to 'Compression' to match that of gzip. (Reported by Alfred M. Szmidt).
+Diagnostics caused by invalid arguments to command-line options now show the
+argument and the name of the option.
+
+The option '-o, --output' now preserves dates, permissions, and ownership of
+the file when (de)compressing exactly one file.
+
+The option '-o, --output' now creates missing intermediate directories when
+writing to a file.
+
+The variable MAKEINFO has been added to configure and Makefile.in.

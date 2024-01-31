@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2022 Antonio Diaz Diaz.
+   Copyright (C) 2008-2024 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -86,7 +86,7 @@ inline int price1( const Bit_model bm )
   { return prob_prices[bit_model_total - bm.probability]; }
 
 inline int price_bit( const Bit_model bm, const bool bit )
-  { return ( bit ? price1( bm ) : price0( bm ) ); }
+  { return bit ? price1( bm ) : price0( bm ); }
 
 
 inline int price_symbol3( const Bit_model bm[], int symbol )
@@ -260,8 +260,7 @@ public:
     ff_count = 0;
     cache = 0;
     header.dictionary_size( dictionary_size );
-    for( int i = 0; i < Lzip_header::size; ++i )
-      put_byte( header.data[i] );
+    for( int i = 0; i < header.size; ++i ) put_byte( header.data[i] );
     }
 
   Range_encoder( const unsigned dictionary_size, const int ofd )

@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2022 Antonio Diaz Diaz.
+   Copyright (C) 2008-2024 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -43,15 +43,15 @@ int seek_read( const int fd, uint8_t * const buf, const int size,
 } // end namespace
 
 
-bool Lzip_index::check_header_error( const Lzip_header & header )
+bool Lzip_index::check_header( const Lzip_header & header )
   {
-  if( !header.verify_magic() )
-    { error_ = bad_magic_msg; retval_ = 2; return true; }
-  if( !header.verify_version() )
-    { error_ = bad_version( header.version() ); retval_ = 2; return true; }
+  if( !header.check_magic() )
+    { error_ = bad_magic_msg; retval_ = 2; return false; }
+  if( !header.check_version() )
+    { error_ = bad_version( header.version() ); retval_ = 2; return false; }
   if( !isvalid_ds( header.dictionary_size() ) )
-    { error_ = bad_dict_msg; retval_ = 2; return true; }
-  return false;
+    { error_ = bad_dict_msg; retval_ = 2; return false; }
+  return true;
   }
 
 void Lzip_index::set_errno_error( const char * const msg )
@@ -70,18 +70,20 @@ void Lzip_index::set_num_error( const char * const msg, unsigned long long num )
 
 
 bool Lzip_index::read_header( const int fd, Lzip_header & header,
-                              const long long pos )
+                              const long long pos, const bool ignore_marking )
   {
-  if( seek_read( fd, header.data, Lzip_header::size, pos ) != Lzip_header::size )
+  if( seek_read( fd, header.data, header.size, pos ) != header.size )
     { set_errno_error( "Error reading member header: " ); return false; }
+  uint8_t byte;
+  if( !ignore_marking && readblock( fd, &byte, 1 ) == 1 && byte != 0 )
+    { error_ = marking_msg; retval_ = 2; return false; }
   return true;
   }
 
 
 // If successful, push last member and set pos to member header.
 bool Lzip_index::skip_trailing_data( const int fd, unsigned long long & pos,
-                                     const bool ignore_trailing,
-                                     const bool loose_trailing )
+                                     const Cl_options & cl_opts )
   {
   if( pos < min_member_size ) return false;
   enum { block_size = 16384,
@@ -102,34 +104,37 @@ bool Lzip_index::skip_trailing_data( const int fd, unsigned long long & pos,
       if( buffer[i-1] <= max_msb )	// most significant byte of member_size
         {
         const Lzip_trailer & trailer =
-          *(const Lzip_trailer *)( buffer + i - Lzip_trailer::size );
+          *(const Lzip_trailer *)( buffer + i - trailer.size );
         const unsigned long long member_size = trailer.member_size();
         if( member_size == 0 )			// skip trailing zeros
-          { while( i > Lzip_trailer::size && buffer[i-9] == 0 ) --i; continue; }
-        if( member_size > ipos + i || !trailer.verify_consistency() )
-          continue;
+          { while( i > trailer.size && buffer[i-9] == 0 ) --i; continue; }
+        if( member_size > ipos + i || !trailer.check_consistency() ) continue;
         Lzip_header header;
-        if( !read_header( fd, header, ipos + i - member_size ) ) return false;
-        if( !header.verify() ) continue;
+        if( !read_header( fd, header, ipos + i - member_size,
+                          cl_opts.ignore_marking ) ) return false;
+        if( !header.check() ) continue;
         const Lzip_header & header2 = *(const Lzip_header *)( buffer + i );
-        const bool full_h2 = bsize - i >= Lzip_header::size;
-        if( header2.verify_prefix( bsize - i ) )	// last member
+        const bool full_h2 = bsize - i >= header.size;
+        if( header2.check_prefix( bsize - i ) )	// last member
           {
           if( !full_h2 ) error_ = "Last member in input file is truncated.";
-          else if( !check_header_error( header2 ) )
+          else if( check_header( header2 ) )
             error_ = "Last member in input file is truncated or corrupt.";
           retval_ = 2; return false;
           }
-        if( !loose_trailing && full_h2 && header2.verify_corrupt() )
+        if( !cl_opts.loose_trailing && full_h2 && header2.check_corrupt() )
           { error_ = corrupt_mm_msg; retval_ = 2; return false; }
-        if( !ignore_trailing )
+        if( !cl_opts.ignore_trailing )
           { error_ = trailing_msg; retval_ = 2; return false; }
-        pos = ipos + i - member_size;
+        const unsigned long long data_size = trailer.data_size();
+        if( !cl_opts.ignore_empty && data_size == 0 )
+          { error_ = empty_msg; retval_ = 2; return false; }
+        pos = ipos + i - member_size;			// good member
         const unsigned dictionary_size = header.dictionary_size();
-        member_vector.push_back( Member( 0, trailer.data_size(), pos,
-                                         member_size, dictionary_size ) );
         if( dictionary_size_ < dictionary_size )
           dictionary_size_ = dictionary_size;
+        member_vector.push_back( Member( 0, data_size, pos, member_size,
+                                         dictionary_size ) );
         return true;
         }
     if( ipos == 0 )
@@ -144,8 +149,7 @@ bool Lzip_index::skip_trailing_data( const int fd, unsigned long long & pos,
   }
 
 
-Lzip_index::Lzip_index( const int infd, const bool ignore_trailing,
-                        const bool loose_trailing )
+Lzip_index::Lzip_index( const int infd, const Cl_options & cl_opts )
   : insize( lseek( infd, 0, SEEK_END ) ), retval_( 0 ), dictionary_size_( 0 )
   {
   if( insize < 0 )
@@ -157,42 +161,42 @@ Lzip_index::Lzip_index( const int infd, const bool ignore_trailing,
       retval_ = 2; return; }
 
   Lzip_header header;
-  if( !read_header( infd, header, 0 ) ) return;
-  if( check_header_error( header ) ) return;
+  if( !read_header( infd, header, 0, cl_opts.ignore_marking ) ||
+      !check_header( header ) ) return;
 
   unsigned long long pos = insize;	// always points to a header or to EOF
   while( pos >= min_member_size )
     {
     Lzip_trailer trailer;
-    if( seek_read( infd, trailer.data, Lzip_trailer::size,
-                   pos - Lzip_trailer::size ) != Lzip_trailer::size )
+    if( seek_read( infd, trailer.data, trailer.size, pos - trailer.size ) !=
+        trailer.size )
       { set_errno_error( "Error reading member trailer: " ); break; }
     const unsigned long long member_size = trailer.member_size();
-    if( member_size > pos || !trailer.verify_consistency() )	// bad trailer
+    if( member_size > pos || !trailer.check_consistency() )	// bad trailer
       {
       if( member_vector.empty() )
-        { if( skip_trailing_data( infd, pos, ignore_trailing, loose_trailing ) )
-            continue; else return; }
-      set_num_error( "Bad trailer at pos ", pos - Lzip_trailer::size );
-      break;
+        { if( skip_trailing_data( infd, pos, cl_opts ) ) continue; return; }
+      set_num_error( "Bad trailer at pos ", pos - trailer.size ); break;
       }
-    if( !read_header( infd, header, pos - member_size ) ) break;
-    if( !header.verify() )				// bad header
+    if( !read_header( infd, header, pos - member_size, cl_opts.ignore_marking ) )
+      break;
+    if( !header.check() )				// bad header
       {
       if( member_vector.empty() )
-        { if( skip_trailing_data( infd, pos, ignore_trailing, loose_trailing ) )
-            continue; else return; }
-      set_num_error( "Bad header at pos ", pos - member_size );
-      break;
+        { if( skip_trailing_data( infd, pos, cl_opts ) ) continue; return; }
+      set_num_error( "Bad header at pos ", pos - member_size ); break;
       }
-    pos -= member_size;
+    const unsigned long long data_size = trailer.data_size();
+    if( !cl_opts.ignore_empty && data_size == 0 )
+      { error_ = empty_msg; retval_ = 2; break; }
+    pos -= member_size;					// good member
     const unsigned dictionary_size = header.dictionary_size();
-    member_vector.push_back( Member( 0, trailer.data_size(), pos,
-                                     member_size, dictionary_size ) );
     if( dictionary_size_ < dictionary_size )
       dictionary_size_ = dictionary_size;
+    member_vector.push_back( Member( 0, data_size, pos, member_size,
+                                     dictionary_size ) );
     }
-  if( pos != 0 || member_vector.empty() )
+  if( pos != 0 || member_vector.empty() || retval_ != 0 )
     {
     member_vector.clear();
     if( retval_ == 0 ) { error_ = "Can't create file index."; retval_ = 2; }

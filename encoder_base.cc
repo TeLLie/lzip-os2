@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2022 Antonio Diaz Diaz.
+   Copyright (C) 2008-2024 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -166,9 +166,8 @@ void LZ_encoder_base::full_flush( const State state )
   Lzip_trailer trailer;
   trailer.data_crc( crc() );
   trailer.data_size( data_position() );
-  trailer.member_size( renc.member_position() + Lzip_trailer::size );
-  for( int i = 0; i < Lzip_trailer::size; ++i )
-    renc.put_byte( trailer.data[i] );
+  trailer.member_size( renc.member_position() + trailer.size );
+  for( int i = 0; i < trailer.size; ++i ) renc.put_byte( trailer.data[i] );
   renc.flush_data();
   }
 

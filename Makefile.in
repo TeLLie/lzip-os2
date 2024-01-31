@@ -38,13 +38,12 @@ list.o         : lzip.h lzip_index.h
 lzip_index.o   : lzip.h lzip_index.h
 main.o         : arg_parser.h lzip.h decoder.h encoder_base.h encoder.h fast_encoder.h
 
-
 doc : info man
 
 info : $(VPATH)/doc/$(pkgname).info
 
 $(VPATH)/doc/$(pkgname).info : $(VPATH)/doc/$(pkgname).texi
-	cd $(VPATH)/doc && makeinfo $(pkgname).texi
+	cd $(VPATH)/doc && $(MAKEINFO) $(pkgname).texi
 
 man : $(VPATH)/doc/$(progname).1
 
@@ -122,6 +121,8 @@ dist : doc
 	  $(DISTNAME)/testsuite/test.txt \
 	  $(DISTNAME)/testsuite/fox.lz \
 	  $(DISTNAME)/testsuite/fox_*.lz \
+	  $(DISTNAME)/testsuite/fox6.lz \
+	  $(DISTNAME)/testsuite/fox6_mark.lz \
 	  $(DISTNAME)/testsuite/test.txt.lz \
 	  $(DISTNAME)/testsuite/test_em.txt.lz
 	rm -f $(DISTNAME)

@@ -2,14 +2,15 @@ Description
 
 Lzip is a lossless data compressor with a user interface similar to the one
 of gzip or bzip2. Lzip uses a simplified form of the 'Lempel-Ziv-Markov
-chain-Algorithm' (LZMA) stream format and provides a 3 factor integrity
-checking to maximize interoperability and optimize safety. Lzip can compress
-about as fast as gzip (lzip -0) or compress most files more than bzip2
-(lzip -9). Decompression speed is intermediate between gzip and bzip2.
-Lzip is better than gzip and bzip2 from a data recovery perspective. Lzip
-has been designed, written, and tested with great care to replace gzip and
-bzip2 as the standard general-purpose compressed format for unix-like
-systems.
+chain-Algorithm' (LZMA) stream format to maximize interoperability. The
+maximum dictionary size is 512 MiB so that any lzip file can be decompressed
+on 32-bit machines. Lzip provides accurate and robust 3-factor integrity
+checking. Lzip can compress about as fast as gzip (lzip -0) or compress most
+files more than bzip2 (lzip -9). Decompression speed is intermediate between
+gzip and bzip2. Lzip is better than gzip and bzip2 from a data recovery
+perspective. Lzip has been designed, written, and tested with great care to
+replace gzip and bzip2 as the standard general-purpose compressed format for
+Unix-like systems.
 
 For compressing/decompressing large files on multiprocessor machines plzip
 can be much faster than lzip at the cost of a slightly reduced compression
@@ -47,9 +48,9 @@ Lzip uses the same well-defined exit status values used by bzip2, which
 makes it safer than compressors returning ambiguous warning values (like
 gzip) when it is used as a back end for other programs like tar or zutils.
 
-Lzip will automatically use for each file the largest dictionary size that
-does not exceed neither the file size nor the limit given. Keep in mind that
-the decompression memory requirement is affected at compression time by the
+Lzip automatically uses for each file the largest dictionary size that does
+not exceed neither the file size nor the limit given. Keep in mind that the
+decompression memory requirement is affected at compression time by the
 choice of dictionary size limit.
 
 The amount of memory required for compression is about 1 or 2 times the
@@ -69,20 +70,20 @@ filename.tlz   becomes   filename.tar
 anyothername   becomes   anyothername.out
 
 (De)compressing a file is much like copying or moving it. Therefore lzip
-preserves the access and modification dates, permissions, and, when
-possible, ownership of the file just as 'cp -p' does. (If the user ID or
-the group ID can't be duplicated, the file permission bits S_ISUID and
-S_ISGID are cleared).
+preserves the access and modification dates, permissions, and, if you have
+appropriate privileges, ownership of the file just as 'cp -p' does. (If the
+user ID or the group ID can't be duplicated, the file permission bits
+S_ISUID and S_ISGID are cleared).
 
 Lzip is able to read from some types of non-regular files if either the
 option '-c' or the option '-o' is specified.
 
 If no file names are specified, lzip compresses (or decompresses) from
-standard input to standard output. Lzip will refuse to read compressed data
+standard input to standard output. Lzip refuses to read compressed data
 from a terminal or write compressed data to a terminal, as this would be
 entirely incomprehensible and might leave the terminal in an abnormal state.
 
-Lzip will correctly decompress a file which is the concatenation of two or
+Lzip correctly decompresses a file which is the concatenation of two or
 more compressed files. The result is the concatenation of the corresponding
 decompressed files. Integrity testing of concatenated compressed files is
 also supported.
@@ -109,13 +110,13 @@ Lzip currently implements two variants of the LZMA algorithm: fast
 (used by option '-0') and normal (used by all other compression levels).
 
 The high compression of LZMA comes from combining two basic, well-proven
-compression ideas: sliding dictionaries (LZ77/78) and markov models (the
-thing used by every compression algorithm that uses a range encoder or
-similar order-0 entropy coder as its last stage) with segregation of
-contexts according to what the bits are used for.
+compression ideas: sliding dictionaries (LZ77) and markov models (the thing
+used by every compression algorithm that uses a range encoder or similar
+order-0 entropy coder as its last stage) with segregation of contexts
+according to what the bits are used for.
 
 The ideas embodied in lzip are due to (at least) the following people:
-Abraham Lempel and Jacob Ziv (for the LZ algorithm), Andrey Markov (for the
+Abraham Lempel and Jacob Ziv (for the LZ algorithm), Andrei Markov (for the
 definition of Markov chains), G.N.N. Martin (for the definition of range
 encoding), Igor Pavlov (for putting all the above together in LZMA), and
 Julian Seward (for bzip2's CLI).
@@ -125,11 +126,10 @@ been compressed. Decompressed is used to refer to data which have undergone
 the process of decompression.
 
 
-Copyright (C) 2008-2022 Antonio Diaz Diaz.
+Copyright (C) 2008-2024 Antonio Diaz Diaz.
 
 This file is free documentation: you have unlimited permission to copy,
 distribute, and modify it.
 
-The file Makefile.in is a data file used by configure to produce the
-Makefile. It has the same copyright owner and permissions that configure
-itself.
+The file Makefile.in is a data file used by configure to produce the Makefile.
+It has the same copyright owner and permissions that configure itself.

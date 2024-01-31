@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2022 Antonio Diaz Diaz.
+   Copyright (C) 2008-2024 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ enum {
   dis_slot_bits = 6,
   start_dis_model = 4,
   end_dis_model = 14,
-  modeled_distances = 1 << (end_dis_model / 2),		// 128
+  modeled_distances = 1 << ( end_dis_model / 2 ),	// 128
   dis_align_bits = 4,
   dis_align_size = 1 << dis_align_bits,
 
@@ -187,8 +187,8 @@ extern const CRC32 crc32;
 
 
 inline bool isvalid_ds( const unsigned dictionary_size )
-  { return ( dictionary_size >= min_dictionary_size &&
-             dictionary_size <= max_dictionary_size ); }
+  { return dictionary_size >= min_dictionary_size &&
+           dictionary_size <= max_dictionary_size; }
 
 
 inline int real_bits( unsigned value )
@@ -203,36 +203,35 @@ const uint8_t lzip_magic[4] = { 0x4C, 0x5A, 0x49, 0x50 };	// "LZIP"
 
 struct Lzip_header
   {
-  uint8_t data[6];			// 0-3 magic bytes
+  enum { size = 6 };
+  uint8_t data[size];			// 0-3 magic bytes
 					//   4 version
 					//   5 coded dictionary size
-  enum { size = 6 };
 
   void set_magic() { std::memcpy( data, lzip_magic, 4 ); data[4] = 1; }
-  bool verify_magic() const
-    { return ( std::memcmp( data, lzip_magic, 4 ) == 0 ); }
+  bool check_magic() const { return std::memcmp( data, lzip_magic, 4 ) == 0; }
 
-  bool verify_prefix( const int sz ) const	// detect (truncated) header
+  bool check_prefix( const int sz ) const	// detect (truncated) header
     {
     for( int i = 0; i < sz && i < 4; ++i )
       if( data[i] != lzip_magic[i] ) return false;
-    return ( sz > 0 );
+    return sz > 0;
     }
 
-  bool verify_corrupt() const			// detect corrupt header
+  bool check_corrupt() const			// detect corrupt header
     {
     int matches = 0;
     for( int i = 0; i < 4; ++i )
       if( data[i] == lzip_magic[i] ) ++matches;
-    return ( matches > 1 && matches < 4 );
+    return matches > 1 && matches < 4;
     }
 
   uint8_t version() const { return data[4]; }
-  bool verify_version() const { return ( data[4] == 1 ); }
+  bool check_version() const { return data[4] == 1; }
 
   unsigned dictionary_size() const
     {
-    unsigned sz = ( 1 << ( data[5] & 0x1F ) );
+    unsigned sz = 1 << ( data[5] & 0x1F );
     if( sz > min_dictionary_size )
       sz -= ( sz / 16 ) * ( ( data[5] >> 5 ) & 7 );
     return sz;
@@ -248,23 +247,23 @@ struct Lzip_header
       const unsigned fraction = base_size / 16;
       for( unsigned i = 7; i >= 1; --i )
         if( base_size - ( i * fraction ) >= sz )
-          { data[5] |= ( i << 5 ); break; }
+          { data[5] |= i << 5; break; }
       }
     return true;
     }
 
-  bool verify() const
-    { return verify_magic() && verify_version() &&
+  bool check() const
+    { return check_magic() && check_version() &&
              isvalid_ds( dictionary_size() ); }
   };
 
 
 struct Lzip_trailer
   {
-  uint8_t data[20];	//  0-3  CRC32 of the uncompressed data
+  enum { size = 20 };
+  uint8_t data[size];	//  0-3  CRC32 of the uncompressed data
 			//  4-11 size of the uncompressed data
 			// 12-19 member size including header and trailer
-  enum { size = 20 };
 
   unsigned data_crc() const
     {
@@ -296,7 +295,7 @@ struct Lzip_trailer
   void member_size( unsigned long long sz )
     { for( int i = 12; i <= 19; ++i ) { data[i] = (uint8_t)sz; sz >>= 8; } }
 
-  bool verify_consistency() const	// check internal consistency
+  bool check_consistency() const	// check internal consistency
     {
     const unsigned crc = data_crc();
     const unsigned long long dsize = data_size();
@@ -312,6 +311,19 @@ struct Lzip_trailer
   };
 
 
+struct Cl_options		// command-line options
+  {
+  bool ignore_empty;
+  bool ignore_marking;
+  bool ignore_trailing;
+  bool loose_trailing;
+
+  Cl_options()
+    : ignore_empty( true ), ignore_marking( true ),
+      ignore_trailing( true ), loose_trailing( false ) {}
+  };
+
+
 struct Error
   {
   const char * const msg;
@@ -324,6 +336,8 @@ inline void set_retval( int & retval, const int new_val )
 const char * const bad_magic_msg = "Bad magic number (file not in lzip format).";
 const char * const bad_dict_msg = "Invalid dictionary size in member header.";
 const char * const corrupt_mm_msg = "Corrupt header in multimember file.";
+const char * const empty_msg = "Empty member not allowed.";
+const char * const marking_msg = "Marking data not allowed.";
 const char * const trailing_msg = "Trailing data not allowed.";
 
 // defined in decoder.cc
@@ -332,7 +346,7 @@ int writeblock( const int fd, const uint8_t * const buf, const int size );
 
 // defined in list.cc
 int list_files( const std::vector< std::string > & filenames,
-                const bool ignore_trailing, const bool loose_trailing );
+                const Cl_options & cl_opts );
 
 // defined in main.cc
 struct stat;
