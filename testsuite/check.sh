@@ -9,7 +9,7 @@ LC_ALL=C
 export LC_ALL
 objdir=`pwd`
 testdir=`cd "$1" ; pwd`
-LZIP="${objdir}"/lzip
+LZIP="${objdir}"/lzip$3
 framework_failure() { echo "failure in testing framework" ; exit 1 ; }
 
 if [ ! -f "${LZIP}" ] || [ ! -x "${LZIP}" ] ; then

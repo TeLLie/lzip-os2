@@ -54,7 +54,7 @@ Makefile : $(VPATH)/configure $(VPATH)/Makefile.in
 	./config.status
 
 check : all
-	@$(VPATH)/testsuite/check.sh $(VPATH)/testsuite $(pkgversion)
+	@$(VPATH)/testsuite/check.sh $(VPATH)/testsuite $(pkgversion) $(EXEEXT)
 
 install : install-bin install-info install-man
 install-strip : install-bin-strip install-info install-man
