@@ -17,9 +17,9 @@ objs = arg_parser.o lzip_index.o list.o encoder_base.o encoder.o \
          uninstall uninstall-bin uninstall-info uninstall-man \
          doc info man check dist clean distclean
 
-all : $(progname)
+all : $(progname)$(EXEEXT)
 
-$(progname) : $(objs)
+$(progname)$(EXEEXT) : $(objs)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(objs)
 
 main.o : main.cc
@@ -47,7 +47,7 @@ $(VPATH)/doc/$(pkgname).info : $(VPATH)/doc/$(pkgname).texi
 
 man : $(VPATH)/doc/$(progname).1
 
-$(VPATH)/doc/$(progname).1 : $(progname)
+$(VPATH)/doc/$(progname).1 : $(progname)$(EXEEXT)
 	help2man -n 'reduces the size of files' -o $@ ./$(progname)
 
 Makefile : $(VPATH)/configure $(VPATH)/Makefile.in
@@ -63,7 +63,7 @@ install-strip-compress : install-bin-strip install-info-compress install-man-com
 
 install-bin : all
 	if [ ! -d "$(DESTDIR)$(bindir)" ] ; then $(INSTALL_DIR) "$(DESTDIR)$(bindir)" ; fi
-	$(INSTALL_PROGRAM) ./$(progname) "$(DESTDIR)$(bindir)/$(progname)"
+	$(INSTALL_PROGRAM) ./$(progname)$(EXEEXT) "$(DESTDIR)$(bindir)/$(progname)$(EXEEXT)"
 
 install-bin-strip : all
 	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install-bin
@@ -90,7 +90,7 @@ install-man-compress : install-man
 uninstall : uninstall-man uninstall-info uninstall-bin
 
 uninstall-bin :
-	-rm -f "$(DESTDIR)$(bindir)/$(progname)"
+	-rm -f "$(DESTDIR)$(bindir)/$(progname)$(EXEEXT)"
 
 uninstall-info :
 	-if $(CAN_RUN_INSTALLINFO) ; then \
@@ -129,7 +129,7 @@ dist : doc
 	lzip -v -9 $(DISTNAME).tar
 
 clean :
-	-rm -f $(progname) $(objs)
+	-rm -f $(progname)$(EXEEXT) $(objs)
 
 distclean : clean
 	-rm -f Makefile config.status *.tar *.tar.lz

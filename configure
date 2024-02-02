@@ -29,6 +29,11 @@ CXXFLAGS='-Wall -W -O2'
 LDFLAGS=
 MAKEINFO=makeinfo
 
+EXEEXT=
+if test "X`uname`" = "XOS/2"; then
+    EXEEXT=".exe"
+fi
+
 # checking whether we are using GNU C++.
 /bin/sh -c "${CXX} --version" > /dev/null 2>&1 || { CXX=c++ ; CXXFLAGS=-O2 ; }
 
@@ -201,6 +206,7 @@ echo "CPPFLAGS = ${CPPFLAGS}"
 echo "CXXFLAGS = ${CXXFLAGS}"
 echo "LDFLAGS = ${LDFLAGS}"
 echo "MAKEINFO = ${MAKEINFO}"
+echo "EXEEXT = ${EXEEXT}"
 rm -f Makefile
 cat > Makefile << EOF
 # Makefile for Lzip - LZMA lossless data compressor
@@ -225,6 +231,7 @@ CPPFLAGS = ${CPPFLAGS}
 CXXFLAGS = ${CXXFLAGS}
 LDFLAGS = ${LDFLAGS}
 MAKEINFO = ${MAKEINFO}
+EXEEXT = ${EXEEXT}
 EOF
 cat "${srcdir}/Makefile.in" >> Makefile
 
