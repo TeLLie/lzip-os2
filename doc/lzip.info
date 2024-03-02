@@ -11,7 +11,7 @@ File: lzip.info,  Node: Top,  Next: Introduction,  Up: (dir)
 Lzip Manual
 ***********
 
-This manual is for Lzip (version 1.24, 26 January 2024).
+This manual is for Lzip (version 1.24.1, 1 March 2024).
 
 * Menu:
 
@@ -653,7 +653,7 @@ using the LZMA coding scheme.
 by option '-0') and normal (used by all other compression levels).
 
    The high compression of LZMA comes from combining two basic, well-proven
-compression ideas: sliding dictionaries (LZ77) and markov models (the thing
+compression ideas: sliding dictionaries (LZ77) and Markov models (the thing
 used by every compression algorithm that uses a range encoder or similar
 order-0 entropy coder as its last stage) with segregation of contexts
 according to what the bits are used for.
@@ -1703,22 +1703,22 @@ Concept index
 
 Tag Table:
 Node: Top203
-Node: Introduction1198
-Node: Output7083
-Node: Invoking lzip8678
-Ref: --trailing-error9547
-Node: Quality assurance19645
-Node: Algorithm28458
-Node: File format31859
-Ref: coded-dict-size33288
-Node: Stream format34519
-Ref: what-is-coded36914
-Node: Trailing data45788
-Node: Examples48124
-Ref: concat-example49564
-Node: Problems50785
-Node: Reference source code51317
-Node: Concept index66362
+Node: Introduction1197
+Node: Output7082
+Node: Invoking lzip8677
+Ref: --trailing-error9546
+Node: Quality assurance19644
+Node: Algorithm28457
+Node: File format31858
+Ref: coded-dict-size33287
+Node: Stream format34518
+Ref: what-is-coded36913
+Node: Trailing data45787
+Node: Examples48123
+Ref: concat-example49563
+Node: Problems50784
+Node: Reference source code51316
+Node: Concept index66361
 
 End Tag Table
 

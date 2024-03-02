@@ -1,3 +1,8 @@
+2024-03-01  Antonio Diaz Diaz  <antonio@gnu.org>
+
+	* Version 1.24.1 released.
+	* main.cc: Fix compilation failure on MinGW because of mkdir.
+
 2024-01-26  Antonio Diaz Diaz  <antonio@gnu.org>
 
 	* Version 1.24 released.
