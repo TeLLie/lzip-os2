@@ -6,7 +6,7 @@
 # to copy, distribute, and modify it.
 
 pkgname=lzip
-pkgversion=1.24
+pkgversion=1.24.1
 progname=lzip
 srctrigger=doc/${pkgname}.texi
 

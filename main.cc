@@ -42,8 +42,10 @@
 #if defined __MSVCRT__ || defined __OS2__ || defined __DJGPP__
 #include <io.h>
 #if defined __MSVCRT__
+#include <direct.h>
 #define fchmod(x,y) 0
 #define fchown(x,y,z) 0
+#define mkdir(name,mode) _mkdir(name)
 #define strtoull std::strtoul
 #define SIGHUP SIGTERM
 #define S_ISSOCK(x) 0
