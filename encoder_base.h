@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2024 Antonio Diaz Diaz.
+   Copyright (C) 2008-2025 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -238,7 +238,7 @@ class Range_encoder
     {
     if( low >> 24 != 0xFF )
       {
-      const bool carry = ( low > 0xFFFFFFFFU );
+      const bool carry = low > 0xFFFFFFFFU;
       put_byte( cache + carry );
       for( ; ff_count > 0; --ff_count ) put_byte( 0xFF + carry );
       cache = low >> 24;
@@ -378,13 +378,13 @@ public:
 
   void encode_len( Len_model & lm, int symbol, const int pos_state )
     {
-    bool bit = ( ( symbol -= min_match_len ) >= len_low_symbols );
+    bool bit = ( symbol -= min_match_len ) >= len_low_symbols;
     encode_bit( lm.choice1, bit );
     if( !bit )
       encode_tree3( lm.bm_low[pos_state], symbol );
     else
       {
-      bit = ( ( symbol -= len_low_symbols ) >= len_mid_symbols );
+      bit = ( symbol -= len_low_symbols ) >= len_mid_symbols;
       encode_bit( lm.choice2, bit );
       if( !bit )
         encode_tree3( lm.bm_mid[pos_state], symbol );

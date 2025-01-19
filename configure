@@ -1,12 +1,12 @@
 #! /bin/sh
 # configure script for Lzip - LZMA lossless data compressor
-# Copyright (C) 2008-2024 Antonio Diaz Diaz.
+# Copyright (C) 2008-2025 Antonio Diaz Diaz.
 #
 # This configure script is free software: you have unlimited permission
 # to copy, distribute, and modify it.
 
 pkgname=lzip
-pkgversion=1.24.1
+pkgversion=1.25
 progname=lzip
 srctrigger=doc/${pkgname}.texi
 
@@ -119,7 +119,7 @@ while [ $# != 0 ] ; do
 		exit 1 ;;
 	esac
 
-	# Check if the option took a separate argument
+	# Check whether the option took a separate argument
 	if [ "${arg2}" = yes ] ; then
 		if [ $# != 0 ] ; then args="${args} \"$1\"" ; shift
 		else echo "configure: Missing argument to '${option}'" 1>&2
@@ -204,7 +204,7 @@ echo "MAKEINFO = ${MAKEINFO}"
 rm -f Makefile
 cat > Makefile << EOF
 # Makefile for Lzip - LZMA lossless data compressor
-# Copyright (C) 2008-2024 Antonio Diaz Diaz.
+# Copyright (C) 2008-2025 Antonio Diaz Diaz.
 # This file was generated automatically by configure. Don't edit.
 #
 # This Makefile is free software: you have unlimited permission

@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2024 Antonio Diaz Diaz.
+   Copyright (C) 2008-2025 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -151,22 +151,22 @@ bool FLZ_encoder::encode_member( const unsigned long long member_size )
 
     if( match_byte == cur_byte )
       {
-      const int short_rep_price = price1( bm_match[state()][pos_state] ) +
-                                  price1( bm_rep[state()] ) +
-                                  price0( bm_rep0[state()] ) +
-                                  price0( bm_len[state()][pos_state] );
+      const int shortrep_price = price1( bm_match[state()][pos_state] ) +
+                                 price1( bm_rep[state()] ) +
+                                 price0( bm_rep0[state()] ) +
+                                 price0( bm_len[state()][pos_state] );
       int price = price0( bm_match[state()][pos_state] );
       if( state.is_char() )
         price += price_literal( prev_byte, cur_byte );
       else
         price += price_matched( prev_byte, cur_byte, match_byte );
-      if( short_rep_price < price )
+      if( shortrep_price < price )
         {
         renc.encode_bit( bm_match[state()][pos_state], 1 );
         renc.encode_bit( bm_rep[state()], 1 );
         renc.encode_bit( bm_rep0[state()], 0 );
         renc.encode_bit( bm_len[state()][pos_state], 0 );
-        state.set_short_rep();
+        state.set_shortrep();
         continue;
         }
       }

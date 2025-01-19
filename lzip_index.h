@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2024 Antonio Diaz Diaz.
+   Copyright (C) 2008-2025 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -59,8 +59,7 @@ class Lzip_index
   bool check_header( const Lzip_header & header );
   void set_errno_error( const char * const msg );
   void set_num_error( const char * const msg, unsigned long long num );
-  bool read_header( const int fd, Lzip_header & header, const long long pos,
-                    const bool ignore_marking );
+  bool read_header( const int fd, Lzip_header & header, const long long pos );
   bool skip_trailing_data( const int fd, unsigned long long & pos,
                            const Cl_options & cl_opts );
 
@@ -71,6 +70,14 @@ public:
   const std::string & error() const { return error_; }
   int retval() const { return retval_; }
   unsigned dictionary_size() const { return dictionary_size_; }
+
+  bool multi_empty() const	// multimember file with empty member(s)
+    {
+    if( member_vector.size() > 1 )
+      for( unsigned long i = 0; i < member_vector.size(); ++i )
+        if( member_vector[i].dblock.size() == 0 ) return true;
+    return false;
+    }
 
   long long udata_size() const
     { if( member_vector.empty() ) return 0;

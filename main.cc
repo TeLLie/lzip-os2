@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2024 Antonio Diaz Diaz.
+   Copyright (C) 2008-2025 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -87,7 +87,7 @@ int verbosity = 0;
 namespace {
 
 const char * const program_name = "lzip";
-const char * const program_year = "2024";
+const char * const program_year = "2025";
 const char * invocation_name = program_name;		// default value
 
 const struct { const char * from; const char * to; } known_extensions[] = {
@@ -113,22 +113,22 @@ bool delete_output_on_interrupt = false;
 void show_help()
   {
   std::printf( "Lzip is a lossless data compressor with a user interface similar to the one\n"
-               "of gzip or bzip2. Lzip uses a simplified form of the 'Lempel-Ziv-Markov\n"
-               "chain-Algorithm' (LZMA) stream format to maximize interoperability. The\n"
-               "maximum dictionary size is 512 MiB so that any lzip file can be decompressed\n"
-               "on 32-bit machines. Lzip provides accurate and robust 3-factor integrity\n"
-               "checking. Lzip can compress about as fast as gzip (lzip -0) or compress most\n"
-               "files more than bzip2 (lzip -9). Decompression speed is intermediate between\n"
-               "gzip and bzip2. Lzip is better than gzip and bzip2 from a data recovery\n"
-               "perspective. Lzip has been designed, written, and tested with great care to\n"
-               "replace gzip and bzip2 as the standard general-purpose compressed format for\n"
-               "Unix-like systems.\n"
+               "of gzip or bzip2. Lzip uses a simplified form of LZMA (Lempel-Ziv-Markov\n"
+               "chain-Algorithm) designed to achieve complete interoperability between\n"
+               "implementations. The maximum dictionary size is 512 MiB so that any lzip\n"
+               "file can be decompressed on 32-bit machines. Lzip provides accurate and\n"
+               "robust 3-factor integrity checking. 'lzip -0' compresses about as fast as\n"
+               "gzip, while 'lzip -9' compresses most files more than bzip2. Decompression\n"
+               "speed is intermediate between gzip and bzip2. Lzip provides better data\n"
+               "recovery capabilities than gzip and bzip2. Lzip has been designed, written,\n"
+               "and tested with great care to replace gzip and bzip2 as general-purpose\n"
+               "compressed format for Unix-like systems.\n"
                "\nUsage: %s [options] [files]\n", invocation_name );
   std::printf( "\nOptions:\n"
                "  -h, --help                     display this help and exit\n"
                "  -V, --version                  output version information and exit\n"
                "  -a, --trailing-error           exit with error status if trailing data\n"
-               "  -b, --member-size=<bytes>      set member size limit in bytes\n"
+               "  -b, --member-size=<bytes>      set member size limit of multimember files\n"
                "  -c, --stdout                   write to standard output, keep input files\n"
                "  -d, --decompress               decompress, test compressed file integrity\n"
                "  -f, --force                    overwrite existing output files\n"
@@ -145,8 +145,6 @@ void show_help()
                "  -0 .. -9                       set compression level [default 6]\n"
                "      --fast                     alias for -0\n"
                "      --best                     alias for -9\n"
-               "      --empty-error              exit with error status if empty member in file\n"
-               "      --marking-error            exit with error status if 1st LZMA byte not 0\n"
                "      --loose-trailing           allow trailing data seeming corrupt header\n"
                "\nIf no file names are given, or if a file is '-', lzip compresses or\n"
                "decompresses from standard input to standard output.\n"
@@ -215,7 +213,7 @@ const char * format_ds( const unsigned dictionary_size )
   const char * p = "";
   const char * np = "  ";
   unsigned num = dictionary_size;
-  bool exact = ( num % factor == 0 );
+  bool exact = num % factor == 0;
 
   for( int i = 0; i < n && ( num > 9999 || ( exact && num >= factor ) ); ++i )
     { num /= factor; if( num % factor != 0 ) exact = false;
@@ -244,7 +242,7 @@ const char * format_num3( unsigned long long num )
   char * const buf = buffer[current++]; current %= buffers;
   char * p = buf + bufsize - 1;		// fill the buffer backwards
   *p = 0;	// terminator
-  if( num > 1024 )
+  if( num > 9999 )
     {
     char prefix = 0;			// try binary first, then si
     for( int i = 0; i < n && num != 0 && num % 1024 == 0; ++i )
@@ -290,7 +288,7 @@ unsigned long long getnum( const char * const arg,
 
   if( !errno && tail[0] )
     {
-    const unsigned factor = ( tail[1] == 'i' ) ? 1024 : 1000;
+    const unsigned factor = (tail[1] == 'i') ? 1024 : 1000;
     int exponent = 0;				// 0 = bad multiplier
     switch( tail[0] )
       {
@@ -406,9 +404,9 @@ int open_instream( const char * const name, struct stat * const in_statsp,
     {
     const int i = fstat( infd, in_statsp );
     const mode_t mode = in_statsp->st_mode;
-    const bool can_read = ( i == 0 && !reg_only &&
-                            ( S_ISBLK( mode ) || S_ISCHR( mode ) ||
-                              S_ISFIFO( mode ) || S_ISSOCK( mode ) ) );
+    const bool can_read = i == 0 && !reg_only &&
+                          ( S_ISBLK( mode ) || S_ISCHR( mode ) ||
+                            S_ISFIFO( mode ) || S_ISSOCK( mode ) );
     if( i != 0 || ( !S_ISREG( mode ) && ( !can_read || one_to_one ) ) )
       {
       if( verbosity >= 0 )
@@ -431,7 +429,7 @@ int open_instream2( const char * const name, struct stat * const in_statsp,
   if( program_mode == m_compress && !recompress && eindex >= 0 )
     {
     if( verbosity >= 0 )
-      std::fprintf( stderr, "%s: %s: Input file already has '%s' suffix.\n",
+      std::fprintf( stderr, "%s: %s: Input file already has '%s' suffix, ignored.\n",
                     program_name, name, known_extensions[eindex].from );
     return -1;
     }
@@ -475,8 +473,8 @@ bool open_outstream( const bool force, const bool protect )
   if( force ) flags |= O_TRUNC; else flags |= O_EXCL;
 
   outfd = -1;
-  if( output_filename.size() &&
-      output_filename[output_filename.size()-1] == '/' ) errno = EISDIR;
+  if( output_filename.size() && output_filename.end()[-1] == '/' )
+    errno = EISDIR;
   else {
     if( !protect && !make_dirs( output_filename ) )
       { show_file_error( output_filename.c_str(),
@@ -600,7 +598,6 @@ int compress( const unsigned long long cfile_size,
               const Lzma_options & encoder_options, const Pretty_print & pp,
               const struct stat * const in_statsp, const bool zero )
   {
-  int retval = 0;
   LZ_encoder_base * encoder = 0;		// polymorphic encoder
   if( verbosity >= 1 ) pp();
 
@@ -618,9 +615,10 @@ int compress( const unsigned long long cfile_size,
     }
 
   unsigned long long in_size = 0, out_size = 0, partial_volume_size = 0;
+  int retval = 0;
   while( true )		// encode one member per iteration
     {
-    const unsigned long long size = ( volume_size > 0 ) ?
+    const unsigned long long size = (volume_size > 0) ?
       std::min( member_size, volume_size - partial_volume_size ) : member_size;
     show_cprogress( cfile_size, in_size, encoder, &pp );	// init
     if( !encoder->encode_member( size ) )
@@ -699,11 +697,12 @@ bool show_trailing_data( const uint8_t * const data, const int size,
 
 int decompress( const unsigned long long cfile_size, const int infd,
                 const Cl_options & cl_opts, const Pretty_print & pp,
-                const bool testing )
+                const bool from_stdin, const bool testing )
   {
   unsigned long long partial_file_pos = 0;
   Range_decoder rdec( infd );
   int retval = 0;
+  bool empty = false, multi = false;
 
   for( bool first_member = true; ; first_member = false )
     {
@@ -743,7 +742,7 @@ int decompress( const unsigned long long cfile_size, const int infd,
 
     LZ_decoder decoder( rdec, dictionary_size, outfd );
     show_dprogress( cfile_size, partial_file_pos, &rdec, &pp );	// init
-    const int result = decoder.decode_member( cl_opts, pp );
+    const int result = decoder.decode_member( pp );
     partial_file_pos += rdec.member_position();
     if( result != 0 )
       {
@@ -754,15 +753,18 @@ int decompress( const unsigned long long cfile_size, const int infd,
                       "File ends unexpectedly" : "Decoder error",
                       partial_file_pos );
         }
-      else if( result == 5 ) pp( empty_msg );
-      else if( result == 6 ) pp( marking_msg );
+      else if( result == 5 ) pp( nonzero_msg );
       retval = 2; break;
       }
+    if( !from_stdin ) { multi = !first_member;
+      if( decoder.data_position() == 0 ) empty = true; }
     if( verbosity >= 2 )
       { std::fputs( testing ? "ok\n" : "done\n", stderr ); pp.reset(); }
     }
   if( verbosity == 1 && retval == 0 )
     std::fputs( testing ? "ok\n" : "done\n", stderr );
+  if( empty && multi && retval == 0 )
+    { show_file_error( pp.name(), empty_msg ); retval = 2; }
   return retval;
   }
 
@@ -891,41 +893,39 @@ int main( const int argc, const char * const argv[] )
   bool zero = false;
   if( argc > 0 ) invocation_name = argv[0];
 
-  enum { opt_eer = 256, opt_lt, opt_mer };
+  enum { opt_lt = 256 };
   const Arg_parser::Option options[] =
     {
-    { '0', "fast",               Arg_parser::no  },
-    { '1', 0,                    Arg_parser::no  },
-    { '2', 0,                    Arg_parser::no  },
-    { '3', 0,                    Arg_parser::no  },
-    { '4', 0,                    Arg_parser::no  },
-    { '5', 0,                    Arg_parser::no  },
-    { '6', 0,                    Arg_parser::no  },
-    { '7', 0,                    Arg_parser::no  },
-    { '8', 0,                    Arg_parser::no  },
-    { '9', "best",               Arg_parser::no  },
-    { 'a', "trailing-error",     Arg_parser::no  },
-    { 'b', "member-size",        Arg_parser::yes },
-    { 'c', "stdout",             Arg_parser::no  },
-    { 'd', "decompress",         Arg_parser::no  },
-    { 'f', "force",              Arg_parser::no  },
-    { 'F', "recompress",         Arg_parser::no  },
-    { 'h', "help",               Arg_parser::no  },
-    { 'k', "keep",               Arg_parser::no  },
-    { 'l', "list",               Arg_parser::no  },
-    { 'm', "match-length",       Arg_parser::yes },
-    { 'n', "threads",            Arg_parser::yes },
-    { 'o', "output",             Arg_parser::yes },
-    { 'q', "quiet",              Arg_parser::no  },
-    { 's', "dictionary-size",    Arg_parser::yes },
-    { 'S', "volume-size",        Arg_parser::yes },
-    { 't', "test",               Arg_parser::no  },
-    { 'v', "verbose",            Arg_parser::no  },
-    { 'V', "version",            Arg_parser::no  },
-    { opt_eer, "empty-error",    Arg_parser::no  },
-    { opt_lt,  "loose-trailing", Arg_parser::no  },
-    { opt_mer, "marking-error",  Arg_parser::no  },
-    {  0, 0,                     Arg_parser::no  } };
+    { '0', "fast",              Arg_parser::no  },
+    { '1', 0,                   Arg_parser::no  },
+    { '2', 0,                   Arg_parser::no  },
+    { '3', 0,                   Arg_parser::no  },
+    { '4', 0,                   Arg_parser::no  },
+    { '5', 0,                   Arg_parser::no  },
+    { '6', 0,                   Arg_parser::no  },
+    { '7', 0,                   Arg_parser::no  },
+    { '8', 0,                   Arg_parser::no  },
+    { '9', "best",              Arg_parser::no  },
+    { 'a', "trailing-error",    Arg_parser::no  },
+    { 'b', "member-size",       Arg_parser::yes },
+    { 'c', "stdout",            Arg_parser::no  },
+    { 'd', "decompress",        Arg_parser::no  },
+    { 'f', "force",             Arg_parser::no  },
+    { 'F', "recompress",        Arg_parser::no  },
+    { 'h', "help",              Arg_parser::no  },
+    { 'k', "keep",              Arg_parser::no  },
+    { 'l', "list",              Arg_parser::no  },
+    { 'm', "match-length",      Arg_parser::yes },
+    { 'n', "threads",           Arg_parser::yes },
+    { 'o', "output",            Arg_parser::yes },
+    { 'q', "quiet",             Arg_parser::no  },
+    { 's', "dictionary-size",   Arg_parser::yes },
+    { 'S', "volume-size",       Arg_parser::yes },
+    { 't', "test",              Arg_parser::no  },
+    { 'v', "verbose",           Arg_parser::no  },
+    { 'V', "version",           Arg_parser::no  },
+    { opt_lt, "loose-trailing", Arg_parser::no  },
+    { 0, 0,                     Arg_parser::no  } };
 
   const Arg_parser parser( argc, argv, options );
   if( parser.error().size() )				// bad option
@@ -941,9 +941,8 @@ int main( const int argc, const char * const argv[] )
     const char * const arg = sarg.c_str();
     switch( code )
       {
-      case '0': case '1': case '2': case '3': case '4':
-      case '5': case '6': case '7': case '8': case '9':
-                zero = ( code == '0' );
+      case '0': case '1': case '2': case '3': case '4': case '5':
+      case '6': case '7': case '8': case '9': zero = code == '0';
                 encoder_options = option_mapping[code-'0']; break;
       case 'a': cl_opts.ignore_trailing = false; break;
       case 'b': member_size = getnum( arg, pn, 100000, max_member_size ); break;
@@ -957,7 +956,7 @@ int main( const int argc, const char * const argv[] )
       case 'm': encoder_options.match_len_limit =
                   getnum( arg, pn, min_match_len_limit, max_match_len );
                 zero = false; break;
-      case 'n': break;
+      case 'n': break;					// ignored
       case 'o': if( sarg == "-" ) to_stdout = true;
                 else { default_output_filename = sarg; } break;
       case 'q': verbosity = -1; break;
@@ -967,9 +966,7 @@ int main( const int argc, const char * const argv[] )
       case 't': set_mode( program_mode, m_test ); break;
       case 'v': if( verbosity < 4 ) ++verbosity; break;
       case 'V': show_version(); return 0;
-      case opt_eer: cl_opts.ignore_empty = false; break;
-      case opt_lt:  cl_opts.loose_trailing = true; break;
-      case opt_mer: cl_opts.ignore_marking = false; break;
+      case opt_lt: cl_opts.loose_trailing = true; break;
       default: internal_error( "uncaught option." );
       }
     } // end process options
@@ -1023,9 +1020,10 @@ int main( const int argc, const char * const argv[] )
     {
     std::string input_filename;
     int infd;
+    const bool from_stdin = filenames[i] == "-";
 
     pp.set_name( filenames[i] );
-    if( filenames[i] == "-" )
+    if( from_stdin )
       {
       if( stdin_used ) continue; else stdin_used = true;
       infd = STDIN_FILENO;
@@ -1072,7 +1070,8 @@ int main( const int argc, const char * const argv[] )
         tmp = compress( cfile_size, member_size, volume_size, infd,
                         encoder_options, pp, in_statsp, zero );
       else
-        tmp = decompress( cfile_size, infd, cl_opts, pp, program_mode == m_test );
+        tmp = decompress( cfile_size, infd, cl_opts, pp, from_stdin,
+                          program_mode == m_test );
       }
     catch( std::bad_alloc & )
       { pp( ( program_mode == m_compress ) ?
