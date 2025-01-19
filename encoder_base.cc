@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2024 Antonio Diaz Diaz.
+   Copyright (C) 2008-2025 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -147,7 +147,7 @@ void Range_encoder::flush_data()
   if( pos > 0 )
     {
     if( outfd >= 0 && writeblock( outfd, buffer, pos ) != pos )
-      throw Error( "Write error" );
+      throw Error( wr_err_msg );
     partial_member_pos += pos;
     pos = 0;
     show_cprogress();

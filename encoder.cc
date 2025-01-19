@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2024 Antonio Diaz Diaz.
+   Copyright (C) 2008-2025 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -299,7 +299,7 @@ int LZ_encoder::sequence_optimizer( const int reps[num_rep_distances],
       cur_state = trials[prev_index].state;
       if( prev_index + 1 == cur )			// len == 1
         {
-        if( dis4 == 0 ) cur_state.set_short_rep();
+        if( dis4 == 0 ) cur_state.set_shortrep();
         else cur_state.set_char();			// literal
         }
       else if( dis4 < num_rep_distances ) cur_state.set_rep();
@@ -478,7 +478,7 @@ bool LZ_encoder::encode_member( const unsigned long long member_size )
   {
   const unsigned long long member_size_limit =
     member_size - Lzip_trailer::size - max_marker_size;
-  const bool best = ( match_len_limit > 12 );
+  const bool best = match_len_limit > 12;
   const int dis_price_count = best ? 1 : 512;
   const int align_price_count = best ? 1 : dis_align_size;
   const int price_count = ( match_len_limit > 36 ) ? 1013 : 4093;
@@ -529,7 +529,7 @@ bool LZ_encoder::encode_member( const unsigned long long member_size )
       const int len = trials[i].price;
       int dis = trials[i].dis4;
 
-      bool bit = ( dis < 0 );
+      bool bit = dis < 0;
       renc.encode_bit( bm_match[state()][pos_state], !bit );
       if( bit )					// literal byte
         {
@@ -548,11 +548,11 @@ bool LZ_encoder::encode_member( const unsigned long long member_size )
         {
         crc32.update_buf( crc_, ptr_to_current_pos() - ahead, len );
         mtf_reps( dis, reps );
-        bit = ( dis < num_rep_distances );
+        bit = dis < num_rep_distances;
         renc.encode_bit( bm_rep[state()], bit );
         if( bit )				// repeated match
           {
-          bit = ( dis == 0 );
+          bit = dis == 0;
           renc.encode_bit( bm_rep0[state()], !bit );
           if( bit )
             renc.encode_bit( bm_len[state()][pos_state], len > 1 );
@@ -562,7 +562,7 @@ bool LZ_encoder::encode_member( const unsigned long long member_size )
             if( dis > 1 )
               renc.encode_bit( bm_rep2[state()], dis > 2 );
             }
-          if( len == 1 ) state.set_short_rep();
+          if( len == 1 ) state.set_shortrep();
           else
             {
             renc.encode_len( rep_len_model, len, pos_state );

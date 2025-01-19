@@ -1,20 +1,11 @@
-Changes in version 1.24:
+Changes in version 1.25:
 
-The option '--empty-error', which forces exit status 2 if any empty member
-is found, has been added.
+lzip now exits with error status 2 if any empty member is found in a
+multimember file.
 
-The option '--marking-error', which forces exit status 2 if the first LZMA
-byte is non-zero in any member, has been added.
+lzip now exits with error status 2 if the first byte of the LZMA stream is
+not 0.
 
-File diagnostics have been reformatted as 'PROGRAM: FILE: MESSAGE'.
+Options '--empty-error' and '--marking-error' have been removed.
 
-Diagnostics caused by invalid arguments to command-line options now show the
-argument and the name of the option.
-
-The option '-o, --output' now preserves dates, permissions, and ownership of
-the file when (de)compressing exactly one file.
-
-The option '-o, --output' now creates missing intermediate directories when
-writing to a file.
-
-The variable MAKEINFO has been added to configure and Makefile.in.
+The chapter 'Syntax of command-line arguments' has been added to the manual.

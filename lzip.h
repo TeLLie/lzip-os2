@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2024 Antonio Diaz Diaz.
+   Copyright (C) 2008-2025 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -31,10 +31,10 @@ public:
     st = next[st];
     }
   bool is_char_set_char() { set_char(); return st < 4; }
-  void set_char_rep()  { st = 8; }
-  void set_match()     { st = ( st < 7 ) ? 7 : 10; }
-  void set_rep()       { st = ( st < 7 ) ? 8 : 11; }
-  void set_short_rep() { st = ( st < 7 ) ? 9 : 11; }
+  void set_char_rep() { st = 8; }
+  void set_match()    { st = ( st < 7 ) ? 7 : 10; }
+  void set_rep()      { st = ( st < 7 ) ? 8 : 11; }
+  void set_shortrep() { st = ( st < 7 ) ? 9 : 11; }
   };
 
 
@@ -313,14 +313,10 @@ struct Lzip_trailer
 
 struct Cl_options		// command-line options
   {
-  bool ignore_empty;
-  bool ignore_marking;
   bool ignore_trailing;
   bool loose_trailing;
 
-  Cl_options()
-    : ignore_empty( true ), ignore_marking( true ),
-      ignore_trailing( true ), loose_trailing( false ) {}
+  Cl_options() : ignore_trailing( true ), loose_trailing( false ) {}
   };
 
 
@@ -337,8 +333,9 @@ const char * const bad_magic_msg = "Bad magic number (file not in lzip format)."
 const char * const bad_dict_msg = "Invalid dictionary size in member header.";
 const char * const corrupt_mm_msg = "Corrupt header in multimember file.";
 const char * const empty_msg = "Empty member not allowed.";
-const char * const marking_msg = "Marking data not allowed.";
+const char * const nonzero_msg = "Nonzero first LZMA byte.";
 const char * const trailing_msg = "Trailing data not allowed.";
+const char * const wr_err_msg = "Write error";
 
 // defined in decoder.cc
 int readblock( const int fd, uint8_t * const buf, const int size );

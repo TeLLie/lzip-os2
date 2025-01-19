@@ -1,7 +1,17 @@
+2025-01-11  Antonio Diaz Diaz  <antonio@gnu.org>
+
+	* Version 1.25 released.
+	* Remove options '--empty-error' and '--marking-error'.
+	* decoder.cc (decode_member): Remove support for Sync Flush marker.
+	* list.cc (list_files): Detect write error on stdout.
+	* lzip.texi: New chapter 'Syntax of command-line arguments'.
+	* check.sh: Use 'cp' instead of 'cat'.
+	* testsuite: Add fox_nz.lz. Remove fox6.lz,fox6_mark.lz,test_em.txt.lz.
+
 2024-03-01  Antonio Diaz Diaz  <antonio@gnu.org>
 
 	* Version 1.24.1 released.
-	* main.cc: Fix compilation failure on MinGW because of mkdir.
+	* main.cc: Fix compilation failure on MinGW caused by mkdir.
 
 2024-01-26  Antonio Diaz Diaz  <antonio@gnu.org>
 
@@ -31,13 +41,13 @@
 	  Make '-o' behave like '-c', but writing to file instead of stdout.
 	  Make '-c' and '-o' check whether the output is a terminal only once.
 	  Do not open output if input is a terminal.
+	  Set a valid invocation_name even if argc == 0.
 	* configure: Build, check, and install without 'make'.
 	* Replace 'decompressed', 'compressed' with 'out', 'in' in output.
 	* lzip_index.cc: Improve messages for corruption in last header.
-	* main.cc: Set a valid invocation_name even if argc == 0.
 	* Document extraction from tar.lz in manual, '--help', and man page.
 	* lzip.texi (Introduction): Mention plzip and tarlz as alternatives.
-	* lzip.texi: Several fixes and improvements.
+	  Several fixes and improvements.
 	* testsuite: Add 9 new test files.
 
 2019-01-03  Antonio Diaz Diaz  <antonio@gnu.org>
@@ -47,9 +57,9 @@
 	* lzip.h (Lzip_trailer): New function 'verify_consistency'.
 	* lzip_index.cc: Detect some kinds of corrupt trailers.
 	* main.cc (main): Check return value of close( infd ).
-	* main.cc: Compile on DOS with DJGPP.
-	* Fix a GCC warning about catching std::bad_alloc by value.
-	* lzip.texi: Improve description of '-0..-9', '-m', and '-s'.
+	  Compile on DOS with DJGPP. (Reported by Robert Riebisch).
+	  Fix a GCC warning about catching std::bad_alloc by value.
+	* lzip.texi: Improve descriptions of '-0..-9', '-m', and '-s'.
 	* configure: Accept appending to CXXFLAGS; 'CXXFLAGS+=OPTIONS'.
 	* INSTALL: Document use of CXXFLAGS+='-D __USE_MINGW_ANSI_STDIO'.
 
@@ -59,13 +69,13 @@
 	* New option '--loose-trailing'.
 	* Improve corrupt header detection to HD=3.
 	* main.cc: Show corrupt or truncated header in multimember file.
-	* main.cc (main): Option '-S, --volume-size' now keeps input files.
+	  (main): Make option '-S, --volume-size' keep input files.
+	  (main): Show final diagnostic when testing multiple files.
+	  (set_c_outname): Do not add a second '.lz' to the arg of '-o'.
 	* encoder_base.*: Adjust dictionary size for each member.
 	* Replace 'bits/byte' with inverse compression ratio in output.
 	* Show progress of decompression at verbosity level 2 (-vv).
 	* Show progress of (de)compression only if stderr is a terminal.
-	* main.cc: Show final diagnostic when testing multiple files.
-	* main.cc: Do not add a second extension '.lz' to the arg of '-o'.
 	* decoder.cc (verify_trailer): Show stored sizes also in hex.
 	  Show dictionary size at verbosity level 4 (-vvvv).
 	* lzip.texi: New chapter 'Meaning of lzip's output'.
@@ -78,7 +88,7 @@
 	* Compression time of option '-0' has been slightly reduced.
 	* Decompression time has been reduced by 2%.
 	* main.cc: Continue testing if any input file is a terminal.
-	* main.cc: Show trailing data in both hexadecimal and ASCII.
+	  Show trailing data in both hexadecimal and ASCII.
 	* encoder.cc (Matchfinder_base): Check the size passed to new.
 	* lzip_index.cc: Improve detection of bad dict and trailing data.
 	* lzip.h: Unify messages for bad magic, trailing data, etc.
@@ -88,15 +98,14 @@
 	* Version 1.18 released.
 	* New option '-a, --trailing-error'.
 	* Decompression time has been reduced by 2%.
-	* decoder.cc (verify_trailer): Remove test of final code.
 	* main.cc (main): Delete '--output' file if infd is a terminal.
-	* main.cc (main): Don't use stdin more than once.
+	  (main): Don't use stdin more than once.
 	* Remove decompression support for version 0 files.
+	* decoder.cc (verify_trailer): Remove test of final code.
 	* lzip.texi: New chapter 'Trailing data'.
 	* configure: Avoid warning on some shells when testing for g++.
 	* Makefile.in: Detect the existence of install-info.
-	* check.sh: A POSIX shell is required to run the tests.
-	* check.sh: Don't check error messages.
+	* check.sh: Require a POSIX shell. Don't check error messages.
 
 2015-07-12  Antonio Diaz Diaz  <antonio@gnu.org>
 
@@ -134,8 +143,8 @@
 	* Compression time has been reduced by 5%.
 	* Decompression time has been reduced by 12%.
 	* Makefile.in: New target 'install-bin'.
-	* main.cc: Use 'setmode' instead of '_setmode' on Windows and OS/2.
 	* main.cc: Define 'strtoull' to 'std::strtoul' on Windows.
+	  (main): Use 'setmode' instead of '_setmode' on Windows and OS/2.
 
 2012-02-24  Antonio Diaz Diaz  <ant_diaz@teleline.es>
 
@@ -163,14 +172,12 @@
 	* Compression time of option '-0' has been reduced by 2%.
 	* main.cc (decompress): Print only one status line for each
 	  multimember file when only one '-v' is specified.
-	* main.cc (decompress): Print up to 6 bytes of trailing data when
-	  '-vvvv' is specified.
-	* main.cc (open_instream): Don't show the message
+	  (decompress): Print 6 bytes of trailing data at verbosity level 4.
+	  (open_instream): Don't show the message
 	  " and '--stdout' was not specified" for directories, etc.
 	* lziprecover.cc: If '-v' is not specified show errors only.
 	* unzcrash.cc: Use Arg_parser.
-	* unzcrash.cc: New options '-b, --bits', '-p, --position', and
-	  '-s, --size'.
+	  New options '-b, --bits', '-p, --position', and '-s, --size'.
 
 2010-09-16  Antonio Diaz Diaz  <ant_diaz@teleline.es>
 
@@ -183,28 +190,26 @@
 	  compress less but faster. (-1 now takes 43% less time for only 20%
 	  larger compressed size).
 	  Exit with status 1 if any output file exists and is skipped.
+	  Fix warning about fchown's return value being ignored.
+	  (main): Set stdin/stdout in binary mode on MSVC and OS2.
 	* Compression ratio of option '-9' has been slightly increased.
-	* lziprecover.cc: New option '-m, --merge', which tries to produce a
-	  correct file by merging the good parts of two or more damaged copies.
-	* lziprecover.cc: New option '-R, --repair' for repairing a
-	  1-byte error in single-member files.
 	* decoder.cc (decode_member): Detect file errors earlier to improve
 	  efficiency of lziprecover's new repair capability.
 	  This change also prevents (harmless) access to uninitialized
 	  memory when decompressing a corrupt file.
-	* lziprecover.cc: New options '-f, --force' and '-o, --output'.
-	* lziprecover.cc: New option '-s, --split' to select the until now
-	  only operation of splitting multimember files.
-	* lziprecover.cc: If no operation is specified, warn the user and do
-	  nothing.
-	* main.cc: Fix warning about fchown's return value being ignored.
-	* decoder.cc: '-tvvvv' now also shows compression ratio.
-	* main.cc: Set stdin/stdout in binary mode on MSVC and OS2.
+	  (verify_trailer): '-tvvvv' now also shows compression ratio.
+	* lziprecover.cc: New option '-m, --merge', which tries to produce a
+	  correct file by merging the good parts of two or more damaged copies.
+	  New option '-R, --repair' for repairing a 1-byte error in
+	  single-member files.
+	  New options '-f, --force' and '-o, --output'.
+	  New option '-s, --split' to select the until now only operation of
+	  splitting multimember files.
+	  If no operation is specified, warn the user and do nothing.
 	* lzip.texinfo: New examples.
 	* testsuite: Rename 'test1' to 'test.txt'. New tests.
 	* Matchfinder types HC4 (4 bytes hash-chain) and HT4 (4 bytes
-	  hash-table) have been tested and found no better than the current
-	  BT4.
+	  hash-table) have been tested and found no better than current BT4.
 
 2010-04-05  Antonio Diaz Diaz  <ant_diaz@teleline.es>
 
@@ -212,9 +217,9 @@
 	* decoder.h: Input_buffer integrated in Range_decoder.
 	* main.cc: File specified with option '-o' is now created with mode
 	  0666 if umask allows it, deleted if interrupted by user.
-	* main.cc: New constant 'o_binary'.
-	* main.cc: Dictionary size for options -2, -3, -4 and -8 has been
-	  changed to improve linearity of compressed sizes.
+	  New constant 'o_binary'.
+	  (main): Change dictionary size for options -2, -3, -4 and -8 to
+	  improve linearity of compressed sizes.
 	* lzip.h: Fix warnings produced by over-optimization (-O3).
 	* Makefile.in: Add quotes to directory names.
 
@@ -241,7 +246,7 @@
 
 	* Version 1.6 released.
 	* Decompression time has been reduced by 17%.
-	* Add decompression support for Sync Flush marker.
+	* decoder.cc (decode_member): Add support for Sync Flush marker.
 	* Add support for the extension '.tbz' to lzdiff and lzgrep.
 	* Add man pages for lzdiff, lzgrep and lziprecover.
 	* encoder.cc (Matchfinder): Reduce memory use to 9x if input file is
@@ -265,8 +270,7 @@
 	* Compression speed has been improved.
 	* Implement bt4 type matchfinder.
 	* lzip.texinfo: New chapter 'Algorithm'.
-	* Lzdiff and lzgrep now accept '-h' for '--help' and
-	  '-V' for '--version'.
+	* lzdiff, lzgrep: Accept '-h' for '--help' and '-V' for '--version'.
 	* Makefile.in: Man page is now installed by default.
 	* check.sh: Check that files are opened in binary mode.
 
@@ -330,7 +334,7 @@
 	* Version 0.3 released.
 	* encoder.cc: Compression is now 15% faster, 1% worse.
 	* main.cc (main): Make option '-t' override '-c'.
-	* main.cc (decompress): Show 'done' instead of 'ok' when not testing.
+	  (decompress): Show 'done' instead of 'ok' when not testing.
 	* encoder.h: Use trials[] to return the list of pairs.
 
 2008-09-09  Antonio Diaz Diaz  <ant_diaz@teleline.es>
@@ -344,7 +348,7 @@
 	* Version 0.1 released.
 
 
-Copyright (C) 2008-2024 Antonio Diaz Diaz.
+Copyright (C) 2008-2025 Antonio Diaz Diaz.
 
 This file is a collection of facts, and thus it is not copyrightable, but just
 in case, you have unlimited permission to copy, distribute, and modify it.

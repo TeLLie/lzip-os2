@@ -1,5 +1,5 @@
 /* Lzip - LZMA lossless data compressor
-   Copyright (C) 2008-2024 Antonio Diaz Diaz.
+   Copyright (C) 2008-2025 Antonio Diaz Diaz.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -75,12 +75,12 @@ public:
     return sz;
     }
 
-  bool load( const bool ignore_marking = true )
+  bool load()
     {
     code = 0;
     range = 0xFFFFFFFFU;
-    // check and discard first byte of the LZMA stream
-    if( get_byte() != 0 && !ignore_marking ) return false;
+    // check first byte of the LZMA stream
+    if( get_byte() != 0 ) return false;
     for( int i = 0; i < 4; ++i ) code = ( code << 8 ) | get_byte();
     return true;
     }
@@ -100,7 +100,7 @@ public:
       range >>= 1;
 //      symbol <<= 1;
 //      if( code >= range ) { code -= range; symbol |= 1; }
-      const bool bit = ( code >= range );
+      const bool bit = code >= range;
       symbol <<= 1; symbol += bit;
       code -= range & ( 0U - bit );
       }
@@ -270,7 +270,7 @@ class LZ_decoder
   bool pos_wrapped;
 
   void flush_data();
-  int check_trailer( const Pretty_print & pp, const bool ignore_empty ) const;
+  bool check_trailer( const Pretty_print & pp ) const;
 
   uint8_t peek_prev() const
     { return buffer[((pos > 0) ? pos : dictionary_size)-1]; }
@@ -294,14 +294,14 @@ class LZ_decoder
     bool fast, fast2;
     if( lpos > distance )
       {
-      fast = ( len < dictionary_size - lpos );
-      fast2 = ( fast && len <= lpos - i );
+      fast = len < dictionary_size - lpos;
+      fast2 = fast && len <= lpos - i;
       }
     else
       {
       i += dictionary_size;
-      fast = ( len < dictionary_size - i );	// (i == pos) may happen
-      fast2 = ( fast && len <= i - lpos );
+      fast = len < dictionary_size - i;		// (i == pos) may happen
+      fast2 = fast && len <= i - lpos;
       }
     if( fast )					// no wrap
       {
@@ -342,5 +342,5 @@ public:
   unsigned crc() const { return crc_ ^ 0xFFFFFFFFU; }
   unsigned long long data_position() const { return partial_data_pos + pos; }
 
-  int decode_member( const Cl_options & cl_opts, const Pretty_print & pp );
+  int decode_member( const Pretty_print & pp );
   };
